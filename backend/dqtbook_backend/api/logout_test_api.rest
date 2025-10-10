@@ -1,0 +1,30 @@
+### Test logout functionality
+
+# Đăng nhập trước
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+    "email": "test@example.com",
+    "password": "password123"
+}
+
+###
+
+# Kiểm tra session hiện tại
+GET http://localhost:8080/auth/me
+
+###
+
+# Đăng xuất
+POST http://localhost:8080/auth/logout
+
+###
+
+# Kiểm tra lại session sau khi logout (should return 401)
+GET http://localhost:8080/auth/me
+
+###
+
+# Test logout khi đã logout rồi (should return success message)
+POST http://localhost:8080/auth/logout

@@ -1,0 +1,224 @@
+### ===========================================
+### FRIEND API TESTS - FIXED VERSION
+### ===========================================
+
+### 1. Get friends of user 1
+GET http://localhost:8080/friends/1
+
+### 2. Get friends of user 2
+GET http://localhost:8080/friends/2
+
+### 3. Get friends of non-existing user (should return "User not found")
+GET http://localhost:8080/friends/999
+
+### 4. Send friend request (User 1 -> User 2)
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 2
+}
+
+### 5. Send friend request (User 2 -> User 3)
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{
+  "sender_id": 3,
+  "receiver_id": 4
+}
+
+### 6. Send friend request to yourself (should fail)
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 1
+}
+
+### 7. Send friend request to non-existing user (should fail)
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 999
+}
+
+### 8. Send duplicate friend request (should fail)
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{
+  "sender_id": 4,
+  "receiver_id": 5
+}
+
+### 9. Accept friend request (User 5 accepts User 4's request)
+PUT http://localhost:8080/friends/accept
+Content-Type: application/json
+
+{
+  "sender_id": 4,
+  "receiver_id": 3
+}
+
+### 10. Accept non-existing friend request (should fail)
+PUT http://localhost:8080/friends/accept
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 3
+}
+
+### 11. Block friend (User 1 blocks User 2)
+PUT http://localhost:8080/friends/block
+Content-Type: application/json
+
+{
+  "sender_id": 4,
+  "receiver_id": 5
+}
+
+### 12. Block non-existing friend (should fail)
+PUT http://localhost:8080/friends/block
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 999
+}
+
+### 13. Unfriend (User 1 unfriends User 2)
+DELETE http://localhost:8080/friends/unfriend
+Content-Type: application/json
+
+{
+  "sender_id": 4,
+  "receiver_id": 5
+}
+
+### 14. Unfriend non-existing relationship (should fail)
+DELETE http://localhost:8080/friends/unfriend
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 999
+}
+
+### 15. Check friends after operations
+GET http://localhost:8080/friends/4
+
+### 16. Check friends after operations
+GET http://localhost:8080/friends/2
+
+### 17. Check friends after operations
+GET http://localhost:8080/friends/3
+
+### 18. Check friends after operations
+GET http://localhost:8080/friends/4
+
+### 19. Check friends after operations
+GET http://localhost:8080/friends/5
+
+### 20. Test with null values (should fail)
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{
+  "sender_id": null,
+  "receiver_id": 2
+}
+
+### 21. Test with null values (should fail)
+PUT http://localhost:8080/friends/accept
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": null
+}
+
+### 22. Test with null values (should fail)
+PUT http://localhost:8080/friends/block
+Content-Type: application/json
+
+{
+  "sender_id": null,
+  "receiver_id": 2
+}
+
+### 23. Test with null values (should fail)
+DELETE http://localhost:8080/friends/unfriend
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": null
+}
+
+### 24. Test with missing fields (should fail)
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{
+  "sender_id": 1
+}
+
+### 25. Test with missing fields (should fail)
+PUT http://localhost:8080/friends/accept
+Content-Type: application/json
+
+{
+  "receiver_id": 2
+}
+
+### 26. Test with missing fields (should fail)
+PUT http://localhost:8080/friends/block
+Content-Type: application/json
+
+{
+  "sender_id": 1
+}
+
+### 27. Test with missing fields (should fail)
+DELETE http://localhost:8080/friends/unfriend
+Content-Type: application/json
+
+{
+  "receiver_id": 2
+}
+
+### 28. Test with invalid JSON (should fail)
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 2,
+  "invalid_field": "test"
+}
+
+### 29. Test with invalid JSON (should fail)
+PUT http://localhost:8080/friends/accept
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 2,
+  "invalid_field": "test"
+}
+
+### 30. Test with invalid JSON (should fail)
+PUT http://localhost:8080/friends/block
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 2,
+  "invalid_field": "test"
+}

@@ -1,0 +1,138 @@
+### Danh sách bài đăng
+GET http://localhost:8080/api/posts
+Cookie: JSESSIONID=E0FEAD37E511E92C2ECE48245887EBB6
+
+### Danh sách bài đăng phù hợp cho 1 user (self + friends + public)
+GET http://localhost:8080/api/posts/suitable/1
+Cookie: JSESSIONID=8CB50F1A22A16ACE608E6CDB3F97471E
+
+### Lấy bài đăng theo id
+GET http://localhost:8080/api/posts/5
+
+### Lấy bài đăng của user theo userId
+GET http://localhost:8080/api/posts/user/1
+Cookie: JSESSIONID=4060E5D2D409BB10FC7114A4DE5B1718
+
+### Lấy bài đăng của FRIENDS của 1 user theo userId
+GET http://localhost:8080/api/posts/friends/1
+Cookie: JSESSIONID=F789F73C5CE44F0FAFA1C21D0B630642
+
+### Lấy các bài đăng Public
+GET http://localhost:8080/api/posts/public
+Cookie: JSESSIONID=F789F73C5CE44F0FAFA1C21D0B630642
+
+### Tạo 1 bài đăng (Với media)
+POST http://localhost:8080/api/posts
+Content-Type: application/json
+Cookie: JSESSIONID=F789F73C5CE44F0FAFA1C21D0B630642
+
+{
+  "author_id": 1,
+  "content": "Tôi đăng ảnh mới",
+  "visibility": "public",
+  "post_type": "normal",
+  "status": "pending",
+  "media": [
+    { "media_type": "image", "media_url": "http://localhost:8080/media/files/1_7f2bfaf6-af56-4ae1-960c-87fabc1cab5c_test.jpg"},
+    { "media_type": "image", "media_url": "http://localhost:8080/media/files/1_46e8d03d-6d54-4da9-86cc-7212f2514710_test2.jpg"}
+  ]
+}
+
+### Tạo 1 bài đăng
+POST http://localhost:8080/api/posts
+Content-Type: application/json
+Cookie: JSESSIONID=0ED90741E20F3A99FA6F2DE62C54BCF2
+
+{
+  "author_id": 1,
+  "content": "Tôi đăng ảnh mới",
+  "visibility": "publics",
+  "post_type": "normal",
+  "status": "pending",
+  "media": []
+}
+
+### Cập nhật 1 bài đăng
+PUT http://localhost:8080/posts/8
+Content-Type: application/json
+
+{
+  "content": "Nội dung đã được chỉnh sửa rồi ok",
+  "visibility": "public",
+  "post_type": "normal",
+  "status": "approved",
+  "media": [
+    { "media_type": "image", "media_url": "http://example.com/image2.png" }
+  ]
+}
+
+### Xóa 1 bài đăng
+DELETE http://localhost:8080/api/posts/11
+Cookie: JSESSIONID=4060E5D2D409BB10FC7114A4DE5B1718
+
+### Reactions (Like/Reaction)
+# Tạo reaction (like)
+POST http://localhost:8080/posts/1/reactions
+Content-Type: application/json
+
+{
+  "user": { "id": 1 },
+  "type": "love"
+}
+
+### Lấy tất cả reactions của post
+GET http://localhost:8080/posts/1/reactions
+
+### Xoá reaction (unlike) theo reaction id
+DELETE http://localhost:8080/posts/1/reactions/1000
+
+### Comments
+# Lấy comment cho post (có thể thêm ?page=..&size=..)
+GET http://localhost:8080/posts/1/comments
+
+### Tạo comment
+POST http://localhost:8080/posts/5/comments
+Content-Type: application/json
+
+{
+  "user": { "id": 2 },
+  "content": "Rất hay luôn!"
+}
+
+### Tạo reply (comment lồng nhau)
+POST http://localhost:8080/posts/1/comments
+Content-Type: application/json
+
+{
+  "user": { "id": 2 },
+  "content": "Cảm ơn bạn, mình trả lời ở đây",
+  "parent_comment_id": 3
+}
+
+### Cập nhật comment
+PUT http://localhost:8080/posts/2/comments/4
+Content-Type: application/json
+
+{
+  "content": "Sửa lại nội dung comment ok nha"
+}
+
+### Xoá comment
+DELETE http://localhost:8080/posts/5/comments/7
+
+### Shares (Chia sẻ bài viết)
+# Tạo 1 share 
+POST http://localhost:8080/posts/5/shares
+Content-Type: application/json
+
+{
+  "user_id": 2,
+  "shared_text": "Mình chia sẻ bài này nha",
+  "visibility": "public"
+}
+
+### Lấy danh sách share của 1 post
+GET http://localhost:8080/posts/5/shares
+
+### Xoá 1 share
+DELETE http://localhost:8080/posts/5/shares/4

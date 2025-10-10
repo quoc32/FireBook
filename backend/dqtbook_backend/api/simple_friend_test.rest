@@ -1,0 +1,51 @@
+### ===========================================
+### SIMPLE FRIEND API TESTS
+### ===========================================
+
+### 1. Send friend request (User 1 -> User 2)
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 2
+}
+
+### 2. Check friends of user 1
+GET http://localhost:8080/friends/1
+
+### 3. Check friends of user 2
+GET http://localhost:8080/friends/2
+
+### 4. Accept friend request (User 2 accepts from User 1)
+PUT http://localhost:8080/friends/accept
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 2
+}
+
+### 5. Check friends again after accepting
+GET http://localhost:8080/friends/1
+
+### 6. Check friends again after accepting
+GET http://localhost:8080/friends/2
+
+### 7. Block friend (User 1 blocks User 2)
+PUT http://localhost:8080/friends/block
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 2
+}
+
+### 8. Unfriend (User 1 unfriends User 2)
+DELETE http://localhost:8080/friends/unfriend
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 2
+}

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>QDT Book Chat Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stomp-websocket@2.3.4-next/lib/stomp.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .chat-container {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        .sidebar {
+            width: 30%;
+            padding-right: 20px;
+        }
+
+        .chat {
+            width: 70%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 10px;
+            background-color: #4267B2;
+            color: white;
+        }
+
+        .chat-messages {
+            height: 300px;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 15px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        .message-received {
+            background-color: #e9e9eb;
+            align-self: flex-start;
+        }
+
+        .message-sent {
+            background-color: #0084ff;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .chat-input {
+            padding: 10px;
+            display: flex;
+            border-top: 1px solid #ddd;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            margin-left: 10px;
+            padding: 8px 16px;
+            background-color: #4267B2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #365899;
+        }
+
+        .button-group {
+            margin: 10px 0;
+        }
+
+        .status {
+            font-style: italic;
+            color: #777;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>QDT Book Chat Test</h1>
+
+        <div class="button-group">
+            <button onclick="connect()" id="connect-btn">Connect</button>
+            <button onclick="disconnect()" id="disconnect-btn" disabled>Disconnect</button>
+        </div>
+
+        <div class="status" id="connection-status">Not connected</div>
+
+        <div class="chat-container">
+            <div class="sidebar">
+                <h3>Settings</h3>
+                <div>
+                    <label for="user-id">User ID:</label>
+                    <input type="number" id="user-id" value="1">
+                </div>
+                <div>
+                    <label for="chat-id">Chat ID:</label>
+                    <input type="number" id="chat-id" value="1">
+                </div>
+                <div>
+                    <button onclick="loadChat()">Load Chat</button>
+                </div>
+                <hr>
+                <h3>Mark as Read</h3>
+                <div>
+                    <label for="message-id">Message ID:</label>
+                    <input type="number" id="message-id">
+                </div>
+                <button onclick="markAsRead()">Mark as Read</button>
+            </div>
+
+            <div class="chat">
+                <div class="chat-header" id="chat-header">
+                    Chat Room
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Messages will appear here -->
+                </div>
+                <div id="typing-indicator" class="status" style="padding: 0 15px;"></div>
+                <div class="chat-input">
+                    <input type="text" id="message-input" placeholder="Type a message..." onkeyup="handleTyping()"
+                        onkeydown="checkEnter(event)">
+                    <button onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stompClient = null;
+        let userId = 1;
+        let chatId = 1;
+        let typingTimeout = null;
+        let reconnectAttempt = 0;
+        let maxReconnectAttempts = 5;
+
+        function connect() {
+            userId = parseInt(document.getElementById('user-id').value);
+            chatId = parseInt(document.getElementById('chat-id').value);
+
+            document.getElementById('connection-status').textContent = 'Connecting...';
+
+            const socket = new SockJS('/ws');  // Use relative path instead of absolute URL
+            stompClient = Stomp.over(socket);
+
+            // Add debug logging
+            stompClient.debug = function (str) {
+                console.log('STOMP: ' + str);
+            };
+
+            stompClient.connect({}, function (frame) {
+                console.log('Connected: ' + frame);
+                document.getElementById('connection-status').textContent = 'Connected!';
+                document.getElementById('connect-btn').disabled = true;
+                document.getElementById('disconnect-btn').disabled = false;
+                // Reset reconnect attempts on successful connection
+                reconnectAttempt = 0;
+
+                // Subscribe to chat messages
+                stompClient.subscribe('/topic/chat.' + chatId, function (message) {
+                    console.log("Received chat message:", message);
+                    try {
+                        showMessage(JSON.parse(message.body));
+                    } catch (e) {
+                        console.error("Error processing message:", e);
+                        showNotification("Error processing message: " + e.message);
+                    }
+                });
+
+                // Subscribe to read status updates
+                stompClient.subscribe('/topic/chat.' + chatId + '.readStatus', function (readStatus) {
+                    console.log("Received read status:", readStatus);
+                    try {
+                        const data = JSON.parse(readStatus.body);
+                        showNotification(`User ${data.userId} read message ${data.messageId}`);
+                    } catch (e) {
+                        console.error("Error processing read status:", e);
+                    }
+                });
+
+                // Subscribe to typing status updates
+                stompClient.subscribe('/topic/chat.' + chatId + '.typing', function (typing) {
+                    console.log("Received typing notification:", typing);
+                    try {
+                        const data = JSON.parse(typing.body);
+                        if (data.userId !== userId && data.typing) {
+                            document.getElementById('typing-indicator').textContent = `User ${data.userId} is typing...`;
+
+                            // Clear the typing indicator after 3 seconds
+                            setTimeout(() => {
+                                document.getElementById('typing-indicator').textContent = '';
+                            }, 3000);
+                        }
+                    } catch (e) {
+                        console.error("Error processing typing status:", e);
+                    }
+                });
+
+                loadChat();
+            }, function (error) {
+                console.error('Connection error:', error);
+                document.getElementById('connection-status').textContent = 'Connection failed: ' + error;
+
+                // Try to reconnect a few times with exponential backoff
+                if (reconnectAttempt < maxReconnectAttempts) {
+                    reconnectAttempt++;
+                    const delay = Math.pow(2, reconnectAttempt) * 1000;
+                    document.getElementById('connection-status').textContent =
+                        `Connection failed. Reconnecting in ${delay / 1000} seconds... (Attempt ${reconnectAttempt}/${maxReconnectAttempts})`;
+
+                    setTimeout(connect, delay);
+                }
+            });
+        }
+
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.disconnect();
+                stompClient = null;
+
+                document.getElementById('connection-status').textContent = 'Disconnected';
+                document.getElementById('connect-btn').disabled = false;
+                document.getElementById('disconnect-btn').disabled = true;
+                document.getElementById('chat-messages').innerHTML = '';
+            }
+        }
+
+        function loadChat() {
+            if (!stompClient) {
+                alert('Please connect first');
+                return;
+            }
+
+            // Normally you would fetch messages from the server here
+            // For the demo, we'll just update the header
+            chatId = parseInt(document.getElementById('chat-id').value);
+            document.getElementById('chat-header').textContent = `Chat Room #${chatId}`;
+            document.getElementById('chat-messages').innerHTML = '';
+        }
+
+        function sendMessage() {
+            if (!stompClient) {
+                alert('Please connect first');
+                return;
+            }
+
+            const content = document.getElementById('message-input').value;
+            if (content.trim() === '') return;
+
+            const message = {
+                content: content,
+                chatId: chatId,
+                senderId: userId,
+                messageType: "TEXT"
+            };
+
+            try {
+                console.log("Sending message:", message);  // Debug log
+                stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(message));
+                document.getElementById('message-input').value = '';
+
+                // Add a notification that the message was sent (not necessarily received)
+                showNotification("Message sent, waiting for confirmation...");
+            } catch (e) {
+                console.error("Error sending message:", e);
+                showNotification("Error sending message: " + e.message);
+            }
+        }
+
+        function markAsRead() {
+            if (!stompClient) {
+                alert('Please connect first');
+                return;
+            }
+
+            const messageId = document.getElementById('message-id').value;
+            if (!messageId) {
+                alert('Please enter a message ID');
+                return;
+            }
+
+            const readStatus = {
+                chatId: chatId,
+                userId: userId,
+                messageId: messageId
+            };
+
+            stompClient.send("/app/chat.readStatus", {}, JSON.stringify(readStatus));
+        }
+
+        function handleTyping() {
+            if (!stompClient) return;
+
+            // Clear existing timeout
+            if (typingTimeout) {
+                clearTimeout(typingTimeout);
+            }
+
+            // Send typing notification
+            const typing = {
+                chatId: chatId,
+                userId: userId,  // Changed from senderId to userId to match TypingStatusDTO
+                typing: true
+            };
+
+            stompClient.send("/app/chat.typing", {}, JSON.stringify(typing));
+
+            // Set timeout to clear typing status
+            typingTimeout = setTimeout(() => {
+                typingTimeout = null;
+            }, 3000);
+        }
+
+        function showMessage(message) {
+            console.log("Received message:", message);  // Debug log
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+
+            // Determine if the message is sent by the current user
+            const isSentByMe = message.senderId === userId;
+
+            messageDiv.className = `message ${isSentByMe ? 'message-sent' : 'message-received'}`;
+
+            // Format the message content with sender information
+            if (!isSentByMe) {
+                messageDiv.innerHTML = `<strong>${message.senderName || 'User ' + message.senderId}:</strong> ${message.content}`;
+            } else {
+                messageDiv.textContent = message.content;
+            }
+
+            messagesContainer.appendChild(messageDiv);
+
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showNotification(text) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const notificationDiv = document.createElement('div');
+            notificationDiv.className = 'status';
+            notificationDiv.style.textAlign = 'center';
+            notificationDiv.textContent = text;
+
+            messagesContainer.appendChild(notificationDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function checkEnter(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+
+</html>

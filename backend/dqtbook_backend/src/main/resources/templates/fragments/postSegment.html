@@ -1,0 +1,506 @@
+<!-- fragments.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8">
+    <title>QDTBook - Home</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <style>
+      body { background:#f0f2f5; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+      .navbar-brand { font-weight:700; color:#1365ff !important; }
+      .search-box { background:#f0f2f5; border:none; border-radius:20px; padding:6px 14px; width:230px; }
+      .search-box:focus { outline:0; box-shadow:none; background:#e4e6eb; }
+      .sidebar-sticky { position:sticky; top:70px; }
+      .story-card { height:160px; border-radius:12px; background:#fff; border:1px solid #ddd; display:flex; align-items:center; justify-content:center; font-weight:600; color:#555; }
+      .composer, .post-card { background:#fff; border-radius:8px; border:1px solid #ddd; }
+      .composer textarea { resize:none; border:none; box-shadow:none; }
+      .composer textarea:focus { outline:0; }
+      .btn-primary { background:#1b74e4; border-color:#1b74e4; }
+      .btn-primary:hover { background:#155ec0; }
+      .avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; }
+      .post-img { border-radius:8px; max-height:480px; object-fit:cover; width:100%; }
+      .action-btn { background:transparent; border:none; padding:6px 8px; border-radius:6px; font-weight:500; color:#555; }
+      .action-btn:hover { background:#f0f2f5; }
+      .right-card { background:#fff; border:1px solid #ddd; border-radius:8px; }
+      @media (max-width: 992px){
+          .left-col, .right-col { display:none; }
+          .search-box { width:140px; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div th:fragment="postSegment(fetchUrl, isSelfProfile)">
+        <!-- Khai báo biến Thymeleaf cho JavaScript -->
+        <p th:text="${fetchUrl}" id="fetchUrl_id" style="display: none;"></p>
+        <p th:text="${isSelfProfile}" id="isSelfProfile_id" hidden></p>
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            const fetchUrl = document.getElementById('fetchUrl_id').textContent;
+            /*]]>*/
+            var isSelfProfile = (function(){
+                const el = document.getElementById('isSelfProfile_id');
+                if(!el) return 'false';
+                const val = el.textContent.trim().toLowerCase();
+                return val === 'true' || val === '1';
+            })();
+        </script>
+
+      <!-- Post Segment:BEGIN -->
+      <div id="postList" class="post-feed"></div>
+
+      <template id="postCardTemplate">
+          <article class="post-card" data-post-id="">
+              <div class="pc-head">
+                  <div class="pc-author">
+                      <div class="pc-av-wrap">
+                            <img class="pc-avatar" src="/img/image1.png" alt="">
+                      </div>
+                      <div class="pc-author-text">
+                          <div class="pc-name">Ẩn danh</div>
+                          <div class="pc-meta">
+                              <time class="post-time"></time>
+                              <span class="pc-dot"></span>
+                              <span class="pc-visibility">Bạn bè</span>
+                          </div>
+                      </div>
+                  </div>
+                <button class="pc-menu" type="button" aria-label="Menu"
+                    onclick="(function(btn){var m=btn.closest('article').querySelector('.pc-more-modal');bootstrap.Modal.getOrCreateInstance(m).show();})(this)">
+                  <i class="bi bi-three-dots"></i>
+                </button>
+
+                <!-- Modal tùy chọn bài Post:BEGIN -->
+                <div class="modal fade pc-more-modal" tabindex="-1" aria-hidden="true" role="dialog">
+                  <div class="modal-dialog modal-dialog-centered modal-sm">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                    <h5 class="modal-title">Tùy chọn bài viết</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                      </div>
+                      <div class="modal-body">
+                    <div class="list-group list-group-flush">
+
+                        <button type="button" class="list-group-item list-group-item-action"
+                            onclick="(function(btn){
+                                console.log('Delete post clicked');
+                                const isSelf = isSelfProfile;
+                                if(!isSelf){
+                                    alert('Chỉ có thể xóa bài viết trên trang cá nhân của bạn.');
+                                    return;
+                                }
+                                const article = btn.closest('article');
+                                const postId = article.dataset.postId;
+                                if(!postId){
+                                    alert('Không xác định được bài viết để xóa.');
+                                    return;
+                                }
+                                if(!confirm('Bạn có chắc chắn muốn xóa bài viết này?')){
+                                    return;
+                                }
+                                // Gửi yêu cầu xóa bài viết
+                                fetch('/api/posts/' + encodeURIComponent(postId), {
+                                    method: 'DELETE',
+                                    credentials: 'include'
+                                }).then(res => {
+                                    if(res.ok){
+                                        // Xóa bài viết khỏi giao diện
+                                        article.remove();
+                                    }else{
+                                        alert('Xóa bài viết thất bại. Vui lòng thử lại.');
+                                    }
+                                }).catch(err => {
+                                    console.error(err);
+                                    alert('Đã xảy ra lỗi khi xóa bài viết.');
+                                });
+                            })(this);"
+                        >Xóa bài viết</button>
+                        <!-- Script xử lý xóa bài viết -->
+                        <script>
+                            
+                        </script>
+
+                      <button type="button" class="list-group-item list-group-item-action">Báo cáo</button>
+                      <button type="button" class="list-group-item list-group-item-action" data-bs-dismiss="modal">Đóng</button>
+                    </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Modal tùy chọn bài Post:END -->
+              </div>
+              <div class="pc-body">
+                  <div class="post-content"></div>
+                  <div class="post-media pm-grid"></div>
+              </div>
+              <div class="pc-actions">
+                  <button type="button" class="act-btn btn-like" data-active="0">
+                      <span class="ico"><i class="bi bi-hand-thumbs-up"></i></span>
+                      <span class="txt">Thích</span>
+                      <span class="count like-count">0</span>
+                  </button>
+                  <button type="button" class="act-btn btn-comment">
+                      <span class="ico"><i class="bi bi-chat-dots"></i></span>
+                      <span class="txt">Bình luận</span>
+                  </button>
+                  <button type="button" class="act-btn">
+                      <span class="ico"><i class="bi bi-share"></i></span>
+                      <span class="txt">Chia sẻ</span>
+                  </button>
+              </div>
+              <div class="pc-footer d-none">
+                  <div class="comment-box">
+                      <input type="text" class="form-control form-control-sm cm-input" placeholder="Viết bình luận...">
+                  </div>
+              </div>
+          </article>
+      </template>
+
+      <style>
+      .post-feed{display:flex;flex-direction:column;gap:20px;}
+      .post-card{
+          position:relative;
+          background:linear-gradient(150deg,#ffffff,#f4f7fa 55%,#ebf2fa);
+          border:1px solid rgba(120,150,190,.35);
+          border-radius:22px;
+          padding:1rem 1rem .5rem;
+          box-shadow:0 8px 26px -10px rgba(30,70,140,.25),0 3px 8px -4px rgba(30,70,140,.18),inset 0 1px 0 rgba(255,255,255,.9);
+          overflow:hidden;
+          /* animation:pcFade .45s cubic-bezier(.4,.65,.25,1); */
+          /* height limit */
+          --pc-max-h:600px;
+          display:flex;
+          flex-direction:column;
+          max-height:var(--pc-max-h);
+      }
+      /* Scrollable body (header + actions + footer stay visible) */
+      .post-card .pc-body{
+          flex:1 1 auto;
+          /* allow the body itself to scroll while keeping header/actions fixed */
+          overflow:auto;
+          scrollbar-width:thin;
+          scrollbar-color:#b8c6d6 transparent;
+          padding-right:.35rem;
+      }
+
+      /* KEEP MEDIA RATIO (no cropping / stretching) */
+      .post-card .pc-body .post-media figure{
+          position:relative;
+          margin:0;
+      }
+      .post-card .pc-body .post-media img,
+      .post-card .pc-body .post-media video{
+          object-fit:contain;   /* show whole media without cropping */
+          display:block;
+          background:#000;      /* letterbox background for videos / wide images */
+          border-radius:14px;
+      }
+
+      /* If a grid cell had a forced height from previous rules, let media inside adapt */
+      .post-card .pc-body .post-media figure > *{
+          max-height:100%;
+      }
+      .post-card .pc-body::-webkit-scrollbar{width:8px;}
+      .post-card .pc-body::-webkit-scrollbar-track{background:transparent;}
+      .post-card .pc-body::-webkit-scrollbar-thumb{
+          background:linear-gradient(#9fb6cc,#6d8fb2);
+          border-radius:20px;
+      }
+      .post-card .pc-body:after{
+          content:"";
+          position:sticky;
+          bottom:0;left:0;right:0;
+          height:28px;
+          pointer-events:none;
+          background:linear-gradient(to bottom,rgba(255,255,255,0),#fff 70%);
+          display:block;
+          margin-top:-28px;
+      }
+      @media (prefers-color-scheme:dark){
+          .post-card .pc-body:after{
+              background:linear-gradient(to bottom,rgba(34,42,52,0),#1b222c 70%);
+          }
+      }
+      /* @keyframes pcFade{0%{transform:translateY(10px);opacity:0}100%{transform:translateY(0);opacity:1}} */
+      .post-card:before{
+          content:"";
+          position:absolute;inset:0;
+          background:
+            radial-gradient(circle at 85% 15%,rgba(27,116,228,.12),transparent 60%),
+            radial-gradient(circle at 12% 85%,rgba(90,162,255,.12),transparent 65%);
+          pointer-events:none;
+          mix-blend-mode:overlay;
+      }
+      /* .post-card:hover{transform:translateY(-3px);box-shadow:0 14px 40px -12px rgba(30,70,140,.35),0 6px 16px -6px rgba(30,70,140,.25),inset 0 1px 0 rgba(255,255,255,.9);} */
+      .pc-head{display:flex;align-items:center;margin-bottom:.65rem;flex:0 0 auto;}
+      .pc-author{display:flex;align-items:center;gap:.75rem;}
+      .pc-av-wrap{position:relative;width:52px;height:52px;border-radius:18px;padding:2px;background:linear-gradient(135deg,#1b74e4,#6aa8ff);}
+      .pc-avatar{width:100%;height:100%;border-radius:16px;object-fit:cover;display:block;box-shadow:0 4px 10px -4px rgba(0,0,0,.35);}
+      .pc-author-text{line-height:1.15;}
+      .pc-name{font-weight:600;font-size:.95rem;}
+      .pc-meta{font-size:.65rem;letter-spacing:.5px;display:flex;align-items:center;text-transform:uppercase;font-weight:600;opacity:.65;}
+      .pc-dot{width:4px;height:4px;border-radius:50%;background:currentColor;margin:0 6px;}
+      .pc-menu{
+          margin-left:auto;
+          background:linear-gradient(135deg,#f2f7ff,#e5eefb);
+          border:1px solid rgba(120,150,190,.35);
+          width:38px;height:38px;border-radius:14px;
+          display:flex;align-items:center;justify-content:center;
+          color:#365372;box-shadow:0 3px 8px -4px rgba(30,70,140,.25),inset 0 1px 0 rgba(255,255,255,.9);
+          transition:.35s;
+      }
+      /* .pc-menu:hover{transform:translateY(-3px);color:#1b74e4;border-color:rgba(27,116,228,.55);} */
+      .pc-body{font-size:.95rem;color:#2a3542;padding:0 .15rem;}
+      .post-content{white-space:pre-wrap;margin-bottom:.75rem;line-height:1.45;font-weight:500;}
+      .post-media{border-radius:18px;overflow:hidden;display:grid;gap:6px;margin-bottom:.6rem;}
+      .pm-grid{--c:1;}
+      .pm-grid.img-2{--c:2;}
+      .pm-grid.img-3{--c:2;}
+      .pm-grid.img-4{--c:2;}
+      .pm-grid>figure,.pm-grid img,.pm-grid video{width:100%;height:100%;object-fit:cover;display:block;}
+      .pm-grid{grid-template-columns:repeat(var(--c),1fr);}
+      .pm-grid img,.pm-grid video{border-radius:14px;box-shadow:0 4px 12px -4px rgba(0,0,0,.25);}
+      .pm-grid.img-3> :first-child{grid-column:span 2;height:320px;}
+      .pm-grid.img-4> :nth-child(1){grid-row:span 2;}
+      .pm-grid.img-4> :nth-child(1){height:100%;}
+      .pc-actions{
+          display:flex;gap:8px;
+          padding:.55rem .35rem .35rem;
+          border-top:1px solid rgba(120,150,190,.25);
+          margin:0 -.15rem;
+          flex:0 0 auto;
+      }
+      .act-btn{
+          flex:1;
+          position:relative;
+          border:1px solid rgba(120,150,190,.35);
+          background:linear-gradient(135deg,#f2f7ff,#e5eefb);
+          color:#2a3542;
+          font-weight:600;font-size:.7rem;letter-spacing:.6px;
+          padding:.55rem .55rem;
+          text-transform:uppercase;
+          border-radius:14px;
+          display:flex;align-items:center;justify-content:center;
+          gap:6px;
+          box-shadow:0 2px 6px -3px rgba(30,70,140,.35),inset 0 1px 0 rgba(255,255,255,.9);
+          transition:.45s cubic-bezier(.6,.2,.2,1);
+          overflow:hidden;
+      }
+      .act-btn .ico{display:flex;}
+      .act-btn .count{
+          background:#1b74e4;
+          color:#fff;
+          padding:0 6px;
+          border-radius:10px;
+          font-size:.6rem;
+          font-weight:600;
+          letter-spacing:0;
+      }
+      /* .act-btn:hover{transform:translateY(-3px);border-color:rgba(27,116,228,.55);color:#1b74e4;} */
+      /* .act-btn:active{transform:translateY(-1px) scale(.95);} */
+      .act-btn[data-active="1"]{
+          background:linear-gradient(135deg,#1b74e4,#559dff);
+          color:#fff;
+          border-color:#1b74e4;
+      }
+      .act-btn[data-active="1"] .count{background:rgba(255,255,255,.25);}
+      .pc-footer{padding:.55rem 0 0;flex:0 0 auto;}
+      .comment-box{position:relative;}
+      .cm-input{
+          background:#f0f4f9;
+          border:1px solid rgba(120,150,190,.35);
+          border-radius:18px;
+          padding:.55rem .9rem;
+          font-size:.75rem;
+      }
+      .cm-input:focus{background:#e8eef5;box-shadow:none;border-color:#1b74e4;}
+      /* Skeleton */
+      .post-skeleton{
+          height:180px;
+          border-radius:22px;
+          background:
+            linear-gradient(100deg,rgba(220,230,240,.6) 8%,rgba(255,255,255,.9) 18%,rgba(220,230,240,.6) 28%) #e2e8ef;
+          background-size:200% 100%;
+          /* animation:shimmer 1.4s linear infinite; */
+          border:1px solid rgba(120,150,190,.25);
+      }
+      /* @keyframes shimmer{to{background-position:-200% 0}} */
+      /* @media (prefers-color-scheme:dark){
+          .post-card{background:linear-gradient(150deg,#222a34,#1b222c 60%,#161d25);border-color:rgba(140,170,210,.25);color:#d9e2ec;}
+          .post-card:before{background:
+              radial-gradient(circle at 85% 15%,rgba(90,162,255,.18),transparent 60%),
+              radial-gradient(circle at 12% 85%,rgba(27,116,228,.18),transparent 65%);
+          }
+          .pc-meta{opacity:.75;}
+          .pc-menu, .act-btn{background:linear-gradient(135deg,#2b3440,#242c36);color:#d3dbe6;border-color:rgba(140,170,210,.28);}
+          .act-btn:hover{color:#7eb6ff;}
+          .cm-input{background:#2a313b;color:#d9e2ec;border-color:rgba(140,170,210,.28);}
+          .cm-input:focus{background:#323a45;border-color:#4c95ff;}
+          .post-skeleton{
+              background:
+                linear-gradient(100deg,rgba(60,70,82,.55) 8%,rgba(90,100,112,.6) 18%,rgba(60,70,82,.55) 28%) #2a313b;
+          }
+      } */
+      </style>
+
+      <script>
+      (function(){
+          const listEl = document.getElementById('postList');
+          const tpl = document.getElementById('postCardTemplate');
+
+          function showSkeleton(count=3){
+              listEl.innerHTML='';
+              for(let i=0;i<count;i++){
+                  const sk=document.createElement('div');
+                  sk.className='post-skeleton';
+                  listEl.appendChild(sk);
+              }
+          }
+
+          async function loadPosts(){
+              showSkeleton();
+              try{
+                  const res = await fetch(fetchUrl, { credentials:'include' });
+                  if(!res.ok) throw new Error(res.status);
+                  const data = await res.json();
+                  const posts = Array.isArray(data) ? data : (Array.isArray(data.content) ? data.content : []);
+                  posts.sort((a, b) => {
+                      const ta = new Date(a.createdAt || a.created_at || a.created || 0).getTime();
+                      const tb = new Date(b.createdAt || b.created_at || b.created || 0).getTime();
+                      return tb - ta; // newest first
+                  });
+                  render(posts);
+              }catch(err){
+                  listEl.innerHTML = '<div class="text-center text-muted small">Không tải được bài viết.</div>';
+              }
+          }
+
+          function render(posts){
+              listEl.innerHTML='';
+              if(posts.length===0){
+                  listEl.innerHTML='<div class="text-center text-muted small">Chưa có bài viết.</div>';
+                  return;
+              }
+              posts.forEach(p=>{
+                  const node = tpl.content.firstElementChild.cloneNode(true);
+
+                  const postId = p.post_id || p.id || '';
+                  const author = p.author || {};
+                  const name = author.fullName || author.full_name || author.name || 'Ẩn danh';
+                  const avatar = author.avatarUrl || author.avatar || '/img/image1.png';
+                  const created = p.created_at || p.createdAt || p.created || null;
+                  const content = (p.content || '').trim();
+
+                  node.dataset.postId = postId;
+                  node.querySelector('.pc-name').textContent = name;
+                  node.querySelector('.pc-avatar').src = avatar;
+                  node.querySelector('.post-time').textContent = formatRelativeTime(created);
+                  const contentEl = node.querySelector('.post-content');
+                  contentEl.textContent = content;
+                  if(!content) contentEl.style.display='none';
+
+                  const mediaWrap = node.querySelector('.post-media');
+                  const mediaArr = Array.isArray(p.media)?p.media:[];
+                  if(mediaArr.length===0){
+                      mediaWrap.style.display='none';
+                  }else{
+                      const total = mediaArr.length;
+                      const classMap = total<=4?('img-'+total):'img-4';
+                      mediaWrap.classList.add(classMap);
+                      mediaArr.slice(0,4).forEach((m,idx)=>{
+                          const t = (m.mediaType||m.media_type)||'image';
+                          const u = m.mediaUrl || m.media_url;
+                          if(!u) return;
+                          let el;
+                          if(t==='video'){
+                              el=document.createElement('video');
+                              el.style.width='100%';
+                              el.style.height='100%';
+                              el.style.objectFit='contain'; /* maintain aspect ratio; scale down if needed */
+                              el.style.display='block';
+                              el.style.background='#000';
+                              el.src=u;
+                              el.controls=true;
+                              el.playsInline=true;
+                          }else{
+                              el=document.createElement('img');
+                              el.src=u;
+                              el.loading='lazy';
+                              el.alt='';
+                          }
+                          const fig=document.createElement('figure');
+                          fig.style.margin='0';
+                          fig.appendChild(el);
+                          if(idx===3 && total>4){
+                              const overlay=document.createElement('div');
+                              overlay.textContent='+'+(total-4);
+                              overlay.style.position='absolute';
+                              overlay.style.inset='0';
+                              overlay.style.display='flex';
+                              overlay.style.alignItems='center';
+                              overlay.style.justifyContent='center';
+                              overlay.style.fontSize='2rem';
+                              overlay.style.fontWeight='700';
+                              overlay.style.color='#fff';
+                              overlay.style.background='rgba(0,0,0,.45)';
+                              overlay.style.backdropFilter='blur(2px)';
+                              fig.style.position='relative';
+                              fig.style.maxHeight="400px";
+                              fig.appendChild(overlay);
+                          }
+                          mediaWrap.appendChild(fig);
+                      });
+                  }
+
+                  const likeBtn = node.querySelector('.btn-like');
+                  const likeCount = node.querySelector('.like-count');
+                  let liked=false;
+                  likeBtn.addEventListener('click',()=>{
+                      liked=!liked;
+                      likeBtn.dataset.active = liked? '1':'0';
+                      const current=Number(likeCount.textContent||'0');
+                      likeCount.textContent = liked ? current+1 : Math.max(0,current-1);
+                  });
+
+                  node.querySelector('.btn-comment').addEventListener('click',()=>{
+                      node.querySelector('.pc-footer').classList.toggle('d-none');
+                      node.querySelector('.cm-input')?.focus();
+                  });
+
+                  node.addEventListener('keydown',e=>{
+                      if(e.target.classList.contains('cm-input') && e.key==='Enter'){
+                          e.preventDefault();
+                          e.target.value='';
+                      }
+                  });
+
+                  listEl.appendChild(node);
+              });
+          }
+
+          function formatRelativeTime(ts){
+              if(!ts) return '';
+              const d=new Date(ts);
+              if(isNaN(d)) return '';
+              const diff = (Date.now()-d.getTime())/1000;
+              if(diff<60) return 'Vừa xong';
+              if(diff<3600) return Math.floor(diff/60)+' phút';
+              if(diff<86400) return Math.floor(diff/3600)+' giờ';
+              if(diff<172800) return 'Hôm qua';
+              return d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
+          }
+
+          loadPosts();
+      })();
+      </script>
+      <!-- Post Segment:END -->
+    </div>
+
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

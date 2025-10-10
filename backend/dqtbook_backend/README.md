@@ -1,0 +1,1 @@
+NOTE: Thay đổi username và password trong src/main/application.properties để chạy được trên database của bạn.

@@ -1,0 +1,130 @@
+### ===========================================
+### CHAT & MESSAGE API TESTS
+### Base URL: http://localhost:8080
+### Tip: In VS Code/JetBrains REST Client, place cursor on a request and Run
+### ===========================================
+
+### 0. (Optional) Create sample users first (adjust as needed)
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "full_name": "Tú Test",
+  "email": "tu.chat@test.local",
+  "password_hash": "password123"
+}
+
+### 0.1 Create another user
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "full_name": "Đạt Test",
+  "email": "dat.chat@test.local",
+  "password_hash": "password123"
+}
+
+### ===========================================
+### CHATS
+### ===========================================
+
+### 1. Create a direct chat (is_group=false). creator_id must be a valid user.
+POST http://localhost:8080/chats
+Content-Type: application/json
+
+{
+  "chat_name": "Alice & Bob",
+  "chat_avatar_url": "https://example.com/avatar.png",
+  "is_group": false,
+  "creator_id": 8,
+  "member_ids": [9]
+}
+
+### 2. Create a group chat (is_group=true)
+POST http://localhost:8080/chats
+Content-Type: application/json
+
+{
+  "chat_name": "Group Alpha",
+  "chat_avatar_url": "https://example.com/group.png",
+  "is_group": true,
+  "creator_id": 8,
+  "member_ids": [7, 9]
+}
+
+### 3. Get all chats of a user
+GET http://localhost:8080/chats/user/8
+
+### 4. Get chat by id (with requesting userId)
+GET http://localhost:8080/chats/8?userId=8
+
+### 5. Update chat info (name/avatar) as a member with permission
+PUT http://localhost:8080/chats/1?userId=1
+Content-Type: application/json
+
+{
+  "chat_name": "Group Alpha Tu",
+  "chat_avatar_url": "https://example.com/group-new.png"
+}
+
+### 6. Delete chat (requires permission)
+DELETE http://localhost:8080/chats/1?userId=1
+
+### 7. Add member to chat (adminUserId required)
+POST http://localhost:8080/chats/8/members?adminUserId=8
+Content-Type: application/json
+
+{
+  "user_id": 1,
+  "role_in_chat": "MEMBER"
+}
+
+### 8. Update member role (e.g., promote to ADMIN)
+PUT http://localhost:8080/chats/1/members?adminUserId=1
+Content-Type: application/json
+
+{
+  "user_id": 2,
+  "role_in_chat": "ADMIN"
+}
+
+### 9. Remove member from chat
+DELETE http://localhost:8080/chats/8/members/1?adminUserId=8
+
+### ===========================================
+### MESSAGES
+### ===========================================
+
+### 10. Send a message
+POST http://localhost:8080/messages
+Content-Type: application/json
+
+{
+  "chat_id": 8,
+  "sender_id": 8,
+  "content": "Hello from REST client",
+  "media_url": null
+}
+
+### 11. Get messages for a chat (with userId)
+GET http://localhost:8080/messages/chat/8?userId=8
+
+### 12. Get a message by id (with userId)
+GET http://localhost:8080/messages/2?userId=8
+
+### 13. Mark a message as read
+POST http://localhost:8080/messages/1/read?userId=8
+
+### 14. Mark all messages in chat as read
+POST http://localhost:8080/messages/chat/8/read-all?userId=8
+
+### 15. Delete a message (by owner or with permission)
+DELETE http://localhost:8080/messages/1?userId=8
+
+### ===========================================
+### NOTES
+### - Replace IDs (userId, chatId, messageId) based on your database state.
+### - For WebSocket tests, see static page: /static/chat-test.html or `api/websocket_chat_test.md`.
+### ===========================================
+
+

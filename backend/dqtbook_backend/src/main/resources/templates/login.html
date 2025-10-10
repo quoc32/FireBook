@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+    crossorigin="anonymous"
+  />
+</head>
+<body class="min-vh-100 d-flex align-items-center py-5 animated-bg">
+  <style>
+    .animated-bg {
+      position: relative;
+      background:
+        radial-gradient(1100px 680px at 10% 10%, #e2efff 0%, #dfe8ff 40%, #ffffff 80%),
+        radial-gradient(620px 420px at 85% 12%, rgba(168,85,247,0.3), transparent 60%),
+        radial-gradient(660px 460px at 15% 88%, rgba(14,165,233,0.32), transparent 60%),
+        radial-gradient(600px 440px at 92% 82%, rgba(245,158,11,0.28), transparent 60%) !important;
+      overflow: hidden;
+      background:
+        radial-gradient(1000px 600px at 10% 10%, #eef5ff 0, #f6fbff 40%, #ffffff 70%);
+    }
+    .animated-bg::before {
+      content: "";
+      position: fixed;
+      inset: -25% -10% -15% -10%;
+      pointer-events: none;
+      background:
+        radial-gradient(600px 400px at 10% 15%, rgba(14,165,233,.35), transparent 60%),
+        radial-gradient(520px 360px at 85% 10%, rgba(168,85,247,.28), transparent 60%),
+        radial-gradient(560px 420px at 15% 90%, rgba(34,197,94,.28), transparent 60%),
+        radial-gradient(480px 340px at 90% 80%, rgba(245,158,11,.26), transparent 60%);
+      filter: blur(40px) saturate(120%);
+      animation: float-blobs 28s ease-in-out infinite alternate;
+      transform: translate3d(0,0,0);
+      z-index: 0;
+    }
+    @keyframes float-blobs {
+      0%   { transform: translate3d(0%, 0%, 0) scale(1); }
+      25%  { transform: translate3d(-2%, 1%, 0) scale(1.03); }
+      50%  { transform: translate3d(1%, -2%, 0) scale(0.98); }
+      75%  { transform: translate3d(2%, 2%, 0) scale(1.02); }
+      100% { transform: translate3d(-1%, 1%, 0) scale(1.01); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .animated-bg::before { animation: none; }
+    }
+    .content-layer { position: relative; z-index: 1; }
+  </style>
+
+  <main class="container content-layer">
+    <div class="row justify-content-center">
+      <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+          <div class="bg-primary-subtle text-primary-emphasis px-4 py-3">
+            <h1 class="h4 mb-0 text-center">Đăng nhập</h1>
+          </div>
+
+          <div class="card-body p-4 p-md-5">
+            <!-- Thông báo từ Spring Security -->
+            <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+              Tên đăng nhập hoặc mật khẩu không đúng.
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+            </div>
+            <div th:if="${session.SPRING_SECURITY_LAST_EXCEPTION != null}"
+                 class="alert alert-danger alert-dismissible fade show" role="alert"
+                 th:text="${session.SPRING_SECURITY_LAST_EXCEPTION.message}">
+              Lỗi xác thực
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+            </div>
+            <div th:if="${param.logout}" class="alert alert-success alert-dismissible fade show" role="alert">
+              Bạn đã đăng xuất.
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+            </div>
+
+            <form id="loginForm" th:action="@{/login}" method="post" autocomplete="on" novalidate>
+              <!-- CSRF (Spring Security) -->
+              <input type="hidden" th:if="${_csrf != null}"
+                     th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+              <div class="mb-3">
+                <label for="username" class="form-label">Email hoặc tên đăng nhập</label>
+                <div class="input-group">
+                  <span class="input-group-text">@</span>
+                  <input id="username"
+                         type="text"
+                         name="username"
+                         inputmode="email"
+                         autocomplete="username"
+                         required
+                         placeholder="you@example.com"
+                         class="form-control" />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="password" class="form-label">Mật khẩu</label>
+                <div class="input-group">
+                  <input id="password"
+                         type="password"
+                         name="password"
+                         autocomplete="current-password"
+                         required
+                         placeholder="Password"
+                         class="form-control" />
+                  <button type="button"
+                          class="btn btn-outline-secondary"
+                          id="togglePassword"
+                          aria-label="Hiện/Ẩn mật khẩu">Hiện</button>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="remember-me" id="rememberMe" />
+                  <label class="form-check-label" for="rememberMe">Ghi nhớ đăng nhập</label>
+                </div>
+                <a th:href="@{/forgot-password}" class="text-decoration-none">Quên mật khẩu?</a>
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100 py-2">
+                Đăng nhập
+              </button>
+
+              <div class="d-flex justify-content-center gap-2 mt-3">
+                <small class="text-muted">Chưa có tài khoản?</small>
+                <a th:href="@{/views/register}" class="text-decoration-none">Tạo tài khoản</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous">
+  </script>
+  <script>
+    (function () {
+      const form = document.getElementById('loginForm');
+      const submitBtn = form?.querySelector('button[type="submit"]');
+      const pwd = document.getElementById('password');
+      const toggle = document.getElementById('togglePassword');
+
+      if (form && submitBtn) {
+        form.addEventListener('submit', function () {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang đăng nhập...';
+        });
+      }
+
+      if (pwd && toggle) {
+        toggle.addEventListener('click', function () {
+          const isPwd = pwd.type === 'password';
+          pwd.type = isPwd ? 'text' : 'password';
+          toggle.textContent = isPwd ? 'Ẩn' : 'Hiện';
+          toggle.setAttribute('aria-pressed', String(isPwd));
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
+<script>
+  (function () {
+    const form = document.getElementById('loginForm');
+    if (!form) return;
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn && !submitBtn.dataset.originalHtml) {
+      submitBtn.dataset.originalHtml = submitBtn.innerHTML;
+    }
+
+    const escapeHtml = (str) =>
+      str?.replace(/[&<>"']/g, (s) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])) ?? '';
+
+    const showAlert = (message, type = 'danger') => {
+      const existing = form.parentElement.querySelector('.client-alert');
+      if (existing) existing.remove();
+      const div = document.createElement('div');
+      div.className = `alert alert-${type} alert-dismissible fade show client-alert`;
+      div.setAttribute('role', 'alert');
+      div.innerHTML =
+        `${escapeHtml(message)}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+      form.parentElement.insertBefore(div, form);
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const emailInput = form.querySelector('#username');
+      const pwdInput = form.querySelector('#password');
+      const email = emailInput?.value?.trim() ?? '';
+      const password = pwdInput?.value ?? '';
+
+      if (!email || !password) {
+        showAlert('Vui lòng nhập email và mật khẩu.');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          if (submitBtn.dataset.originalHtml) submitBtn.innerHTML = submitBtn.dataset.originalHtml;
+        }
+        return;
+      }
+
+      const csrfInput = form.querySelector('input[type="hidden"][name]');
+      const headers = { 'Content-Type': 'application/json' };
+      if (csrfInput?.value) headers['X-CSRF-TOKEN'] = csrfInput.value;
+
+      try {
+        const res = await fetch(`${location.origin}/api/auth/login`, {
+          method: 'POST',
+          headers,
+          credentials: 'same-origin',
+          body: JSON.stringify({ email, password })
+        });
+
+        if (!res.ok) {
+          let msg = 'Đăng nhập thất bại. Vui lòng kiểm tra lại.';
+          try {
+            const data = await res.json();
+            if (data?.message) msg = data.message;
+            else if (data?.error) msg = data.error;
+          } catch {}
+          showAlert(msg, 'danger');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            if (submitBtn.dataset.originalHtml) submitBtn.innerHTML = submitBtn.dataset.originalHtml;
+          }
+          return;
+        }
+        const data = await res.json();
+        try {
+          localStorage.setItem('auth', JSON.stringify({ ...data, stored_at: new Date().toISOString() }));
+        } catch {}
+        const params = new URLSearchParams(location.search);
+        const redirectTo = params.get('redirect') || params.get('next') || '/';
+        location.replace(redirectTo);
+      } catch {
+        showAlert('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          if (submitBtn.dataset.originalHtml) submitBtn.innerHTML = submitBtn.dataset.originalHtml;
+        }
+      }
+    });
+  })();
+</script>

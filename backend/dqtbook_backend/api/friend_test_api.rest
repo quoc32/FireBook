@@ -1,0 +1,191 @@
+### ===========================================
+### FRIEND API TESTS
+### ===========================================
+
+### 1. Get friends of user 3
+GET http://localhost:8080/api/friends/1
+Cookie: JSESSIONID=1046E9E658BCD323CF84ED0D7F191C14
+
+### 2. Get friends of user 2
+GET http://localhost:8080/api/friends/2
+
+### 3. Get friends of non-existing user
+GET http://localhost:8080/api/friends/999
+
+### 4. Send friend request
+POST http://localhost:8080/api/friends/request
+Cookie: JSESSIONID=F364B6AD5B22140A3926453BE0F9E0BD
+Content-Type: application/json
+
+{
+  "sender_id": 3,
+  "receiver_id": 2
+}
+
+### 5. Accept friend request (User 3 accepts User 1's request)
+PUT http://localhost:8080/api/friends/accept
+Cookie: JSESSIONID=9A9478DF73891591D21A319AD3789B18
+Content-Type: application/json
+
+{
+  "sender_id": 3,
+  "receiver_id": 1
+}
+
+### 6. Refuse friend request 
+PUT http://localhost:8080/api/friends/refuse
+Cookie: JSESSIONID=8FD893D527AB7F4AE75F6D57F9459B0A
+Content-Type: application/json
+
+{
+  "sender_id": 3,
+  "receiver_id": 1
+}
+
+### 7. Block friend (User 1 blocks User 2)
+PUT http://localhost:8080/api/friends/block
+Cookie: JSESSIONID=7DBF3861CB4725D9D00F50BED938BB86
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 3
+}
+
+### 8. Unfriend (User 1 unfriends User 2)
+DELETE http://localhost:8080/api/friends/unfriend
+Cookie: JSESSIONID=D015060D8A7DA0CDA1691649033CF543
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 8
+}
+
+### 8. Cancel friend request (User 1 unfriends User 2)
+DELETE http://localhost:8080/api/friends/cancel_request
+Cookie: JSESSIONID=AEF5FEA2829B1010CDAEBB2D39C9F52A
+Content-Type: application/json
+
+{
+  "sender_id": 3,
+  "receiver_id": 1
+}
+
+### 10. Danh sách bạn bè gợi ý
+GET http://localhost:8080/api/friends/suggestions/10
+Cookie: JSESSIONID=C8777DD8E2056A4FF055D65628CBC399
+
+### ===========================================
+### COMPLETE FRIEND FLOW TEST
+### ===========================================
+
+### 15. Create new users first (if needed)
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "full_name": "Alice",
+  "email": "alice@example.com",
+  "password_hash": "password123"
+}
+
+### 16. Create another user
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "full_name": "Bob",
+  "email": "bob@example.com",
+  "password_hash": "password123"
+}
+
+### 17. Send friend request (Alice -> Bob)
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{
+  "sender_id": 4,
+  "receiver_id": 5
+}
+
+### 18. Check Alice's friends (should show pending request)
+GET http://localhost:8080/friends/4
+
+### 19. Check Bob's friends (should show pending request)
+GET http://localhost:8080/friends/5
+
+### 20. Bob accepts Alice's request
+PUT http://localhost:8080/friends/accept
+Content-Type: application/json
+
+{
+  "user_id_1": 4,
+  "user_id_2": 5
+}
+
+### 21. Check Alice's friends (should show accepted)
+GET http://localhost:8080/friends/4
+
+### 22. Check Bob's friends (should show accepted)
+GET http://localhost:8080/friends/5
+
+### 23. Alice blocks Bob
+PUT http://localhost:8080/friends/block
+Content-Type: application/json
+
+{
+  "user_id_1": 4,
+  "user_id_2": 5
+}
+
+### 24. Check Alice's friends (should show blocked)
+GET http://localhost:8080/friends/4
+
+### 25. Alice unfriends Bob
+DELETE http://localhost:8080/friends/unfriend
+Content-Type: application/json
+
+{
+  "user_id_1": 4,
+  "user_id_2": 5
+}
+
+### 26. Check Alice's friends (should be empty)
+GET http://localhost:8080/friends/4
+
+### ===========================================
+### ERROR HANDLING TESTS
+### ===========================================
+
+### 27. Test with null values
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{
+  "sender_id": null,
+  "receiver_id": 2
+}
+
+### 28. Test with missing fields
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{
+  "sender_id": 1
+}
+
+### 29. Test with empty request body
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{}
+
+### 30. Test invalid JSON
+POST http://localhost:8080/friends/request
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 2
+  // Missing closing brace

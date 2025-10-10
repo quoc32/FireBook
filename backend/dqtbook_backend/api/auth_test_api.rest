@@ -1,0 +1,21 @@
+### 1. Login với email và mật khẩu
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "quoc1@gmail.com",
+  "password": "123456"
+}
+### 1.2. Login với email và mật khẩu
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "quoc10@gmail.com",
+  "password": "123456"
+}
+
+### 2. Logout với sessionId
+POST http://localhost:8080/api/auth/logout
+Content-Type: application/json
+Cookie: JSESSIONID=08154ECA196D0A304C8F64FCCCED02F1

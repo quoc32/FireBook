@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>QDTBook - Home</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <style>
+        body { background:#f0f2f5; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+        .navbar-brand { font-weight:700; color:#1365ff !important; }
+        .search-box { background:#f0f2f5; border:none; border-radius:20px; padding:6px 14px; width:230px; }
+        .search-box:focus { outline:0; box-shadow:none; background:#e4e6eb; }
+        .sidebar-sticky { position:sticky; top:70px; }
+        .story-card { height:160px; border-radius:12px; background:#fff; border:1px solid #ddd; display:flex; align-items:center; justify-content:center; font-weight:600; color:#555; }
+        .composer, .post-card { background:#fff; border-radius:8px; border:1px solid #ddd; }
+        .composer textarea { resize:none; border:none; box-shadow:none; }
+        .composer textarea:focus { outline:0; }
+        .btn-primary { background:#1b74e4; border-color:#1b74e4; }
+        .btn-primary:hover { background:#155ec0; }
+        .avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; }
+        .post-img { border-radius:8px; max-height:480px; object-fit:cover; width:100%; }
+        .action-btn { background:transparent; border:none; padding:6px 8px; border-radius:6px; font-weight:500; color:#555; }
+        .action-btn:hover { background:#f0f2f5; }
+        .right-card { background:#fff; border:1px solid #ddd; border-radius:8px; }
+        @media (max-width: 992px){
+            .left-col, .right-col { display:none; }
+            .search-box { width:140px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Nhúng fragment navbar -->
+    <div th:replace="fragments/navbar :: navbar"></div>
+
+    <!-- Main content:BEGIN -->
+    <div class="container-fluid mt-3">
+        <div class="row g-3">
+            <!-- Left Sidebar -->
+            <div class="col-lg-3 left-col">
+                <div class="sidebar-sticky">
+                    <ul class="side-nav p-0 mb-3">
+                        <!-- Trang cá nhân -->
+                        <li>
+                            <a href="views/user" class="side-link">
+                                <img class="side-ico" id="sideUserAvatar" src="/img/image1.png" alt="User">
+                                <script>
+                                (function(){
+                                    const img = document.getElementById('sideUserAvatar');
+                                    if(!img) return;
+                                    try{
+                                        const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                                        // Prefer direct URL
+                                        if(auth?.avatar_url){
+                                            img.src = auth.avatar_url;
+                                            return;
+                                        }
+                                    }catch(_){}
+                                })();
+                                </script>
+                                <span class="fw-semibold" id="sideUserFullName">Trang cá nhân</span>
+                                <script>
+                                (function(){
+                                    const el = document.getElementById('sideUserFullName');
+                                    if(!el) return;
+                                    try{
+                                        const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                                        el.textContent = auth?.full_name?.trim() || 'Trang cá nhân';
+                                    }catch(_){
+                                        el.textContent = 'Trang cá nhân';
+                                    }
+                                })();
+                                </script>
+                            </a>
+                        </li>
+                        <!-- Bạn bè -->
+                        <li>
+                            <a href="/views/friends" class="side-link">
+                                <img class="side-ico" src="/img/friends-icon-2.png" alt="Friends">
+                                <span>Bạn bè</span>
+                            </a>
+                        </li>
+                        <!-- Nhóm -->
+                        <li>
+                            <a href="#" class="side-link">
+                                <img class="side-ico" src="/img/groups-icon-2.png" alt="Groups">
+                                <span>Nhóm</span>
+                            </a>
+                        </li>
+                        <!-- Marketplace -->
+                        <li>
+                            <a href="#" class="side-link">
+                                <img class="side-ico" src="/img/marketplace-icon-2.png" alt="Marketplace">
+                                <span>Marketplace</span>
+                            </a>
+                        </li>
+                        <!-- Sự kiện -->
+                        <li>
+                            <a href="#" class="side-link">
+                                <img class="side-ico" src="/img/event-icon-2.png" alt="Events">
+                                <span>Sự kiện</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <small class="text-muted">© 2025 QDTBook</small>
+                </div>
+            </div>
+            <style>
+            .side-nav{list-style:none;}
+            .side-nav li{margin:2px 0;}
+            .side-link{
+                display:flex;
+                align-items:center;
+                gap:10px;
+                text-decoration:none;
+                color:#212529;
+                padding:6px 10px;
+                border-radius:8px;
+                font-weight:500;
+                line-height:1.2;
+                transition:background .15s;
+            }
+            .side-link:hover{
+                background:#e4e6eb;
+                text-decoration:none;
+            }
+            .side-ico{
+                width:28px;
+                height:28px;
+                border-radius:6px;
+                object-fit:cover;
+                flex-shrink:0;
+            }
+            </style>
+
+            <!-- Feed:BEGIN -->
+            <div class="col-lg-6">
+
+                <!-- Nhúng fragment postComposer -->
+                <div th:replace="fragments/postComposer :: postComposer"></div>
+                 <!-- Nhúng fragment postComposerModal -->
+                <div th:replace="fragments/postComposer :: postComposerModal"></div>
+                <!-- Nhúng fragment postSegment -->
+                <div th:replace="~{fragments/postSegment :: postSegment(
+                    fetchUrl=@{/api/posts/suitable/{id}(id=${userId})},
+                    isSelfProfile=${'false'}
+                )}"></div>
+
+            </div>
+            <!-- Feed:END -->
+
+            <!-- Right Sidebar:BEGIN -->
+            <div class="col-lg-3 right-col">
+                <div class="sidebar-sticky">
+                <div class="right-card p-3 mb-3">
+                    <h6 class="fw-semibold mb-3">Bạn bè (Online)</h6>
+                    <ul class="list-unstyled mb-0 small" id="friendList">
+                        <li>
+                            <button class="friend-item w-100 text-start" data-fid="1" data-name="Linh Trần" data-avatar="https://i.pravatar.cc/100?img=24">
+                            <img src="https://i.pravatar.cc/100?img=24" class="fi-avatar">
+                            <span>Linh Trần</span>
+                            <span class="online-dot"></span>
+                            </button>
+                        </li>
+                        <li>
+                            <button class="friend-item w-100 text-start" data-fid="2" data-name="An Nguyễn" data-avatar="https://i.pravatar.cc/100?img=32">
+                            <img src="https://i.pravatar.cc/100?img=32" class="fi-avatar">
+                            <span>An Nguyễn</span>
+                            <span class="online-dot"></span>
+                            </button>
+                        </li>
+                        <li>
+                            <button class="friend-item w-100 text-start" data-fid="3" data-name="Khoa Phạm" data-avatar="https://i.pravatar.cc/100?img=15">
+                            <img src="https://i.pravatar.cc/100?img=15" class="fi-avatar">
+                            <span>Khoa Phạm</span>
+                            <span class="online-dot"></span>
+                            </button>
+                        </li>
+                        <li>
+                            <button class="friend-item w-100 text-start" data-fid="4" data-name="Hà Minh" data-avatar="https://i.pravatar.cc/100?img=41">
+                            <img src="https://i.pravatar.cc/100?img=41" class="fi-avatar">
+                            <span>Hà Minh</span>
+                            <span class="online-dot"></span>
+                            </button>
+                        </li>
+                        <li>
+                            <button class="friend-item w-100 text-start" data-fid="5" data-name="Lan Phương" data-avatar="https://i.pravatar.cc/100?img=47">
+                            <img src="https://i.pravatar.cc/100?img=47" class="fi-avatar">
+                            <span>Lan Phương</span>
+                            <span class="online-dot"></span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                </div>
+            </div>
+
+            <style>
+                .friend-item{
+                border:0;
+                background:transparent;
+                padding:6px 6px;
+                display:flex;
+                align-items:center;
+                gap:8px;
+                border-radius:8px;
+                cursor:pointer;
+                position:relative;
+                width:100%;
+                }
+                .friend-item:hover{background:#f0f2f5;}
+                .fi-avatar{
+                width:34px;
+                height:34px;
+                border-radius:50%;
+                object-fit:cover;
+                flex-shrink:0;
+                }
+                .online-dot{
+                width:10px;
+                height:10px;
+                background:#31a24c;
+                border:2px solid #fff;
+                border-radius:50%;
+                position:absolute;
+                right:8px;
+                }
+
+                .chat-window{
+                position:fixed;
+                bottom:0;
+                width:300px;
+                background:#fff;
+                border:1px solid #cfd0d3;
+                border-radius:12px 12px 0 0;
+                box-shadow:0 4px 18px -4px rgba(0,0,0,.25);
+                display:flex;
+                flex-direction:column;
+                overflow:hidden;
+                animation:popIn .18s ease;
+                z-index:1040;
+                }
+                @keyframes popIn{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+                .chat-header{
+                padding:6px 10px;
+                display:flex;
+                align-items:center;
+                gap:8px;
+                background:#f5f6f8;
+                cursor:pointer;
+                user-select:none;
+                }
+                .chat-header img{
+                width:32px;
+                height:32px;
+                border-radius:50%;
+                object-fit:cover;
+                }
+                .chat-header .actions{
+                margin-left:auto;
+                display:flex;
+                gap:4px;
+                }
+                .chat-header button{
+                border:0;
+                background:transparent;
+                width:28px;
+                height:28px;
+                border-radius:6px;
+                font-size:14px;
+                }
+                .chat-header button:hover{background:#e4e6eb;}
+                .chat-body{
+                padding:8px 10px 54px;
+                overflow-y:auto;
+                flex:1;
+                font-size:14px;
+                background:#fff;
+                }
+                .chat-msg{
+                margin-bottom:6px;
+                display:flex;
+                max-width:80%;
+                }
+                .chat-msg.you{justify-content:flex-end;margin-left:auto;}
+                .chat-bubble{
+                background:#f0f2f5;
+                padding:6px 10px;
+                border-radius:16px;
+                line-height:1.3;
+                }
+                .chat-msg.you .chat-bubble{
+                background:#1b74e4;
+                color:#fff;
+                }
+                .chat-input-wrap{
+                position:absolute;
+                left:0;right:0;bottom:0;
+                padding:6px 8px 8px;
+                background:#fff;
+                border-top:1px solid #e1e2e4;
+                display:flex;
+                gap:6px;
+                }
+                .chat-input-wrap input{
+                flex:1;
+                border:1px solid #d0d2d5;
+                border-radius:20px;
+                padding:6px 12px;
+                font-size:14px;
+                }
+                .chat-input-wrap input:focus{outline:none;border-color:#1b74e4;}
+                .chat-input-wrap button{
+                border:0;
+                background:#1b74e4;
+                color:#fff;
+                padding:0 14px;
+                border-radius:20px;
+                font-size:14px;
+                }
+                .chat-window.minimized .chat-body,
+                .chat-window.minimized .chat-input-wrap{display:none;}
+                .chat-window.minimized{height:auto;}
+                @media (max-width: 992px){
+                .chat-window{width:260px;}
+                }
+            </style>
+
+            <script>
+            (function(){
+                const MAX_WINDOWS = 2; // max chat windows open
+                const OPEN = new Map(); // friendId -> windowEl
+
+                function calcPositions(){
+                    const wins=[...OPEN.values()];
+                    wins.forEach((w,i)=>{
+                        w.style.right = (10 + i*(w.offsetWidth + 10)) + 'px';
+                    });
+                }
+
+                function createChatWindow(friend){
+                    if(OPEN.has(friend.id)){
+                        focusWindow(friend.id);
+                        return;
+                    }
+                    if(OPEN.size >= MAX_WINDOWS){
+                        const firstKey = OPEN.keys().next().value;
+                        closeWindow(firstKey);
+                    }
+
+                    const FIXED_HEIGHT = 420; // constant chat window height (px)
+
+                    const wrap=document.createElement('div');
+                    wrap.className='chat-window';
+                    wrap.dataset.fid=friend.id;
+                    wrap.style.height = FIXED_HEIGHT + 'px'; // keep constant height so body scrolls
+                    wrap.innerHTML = `
+                        <div class="chat-header" data-role="header">
+                            <img src="${friend.avatar}" alt="">
+                            <div class="small fw-semibold">${friend.name}</div>
+                            <div class="actions">
+                                <button data-action="min" title="Thu nhỏ">_</button>
+                                <button data-action="close" title="Đóng">&times;</button>
+                            </div>
+                        </div>
+                        <div class="chat-body" data-role="body">
+                            <div class="chat-msg">
+                                <div class="chat-bubble">Chào ${friend.name} 👋</div>
+                            </div>
+                        </div>
+                        <div class="chat-input-wrap">
+                            <input type="text" placeholder="Nhắn tin..." data-role="input">
+                            <button data-role="send">Gửi</button>
+                        </div>
+                    `;
+                    document.body.appendChild(wrap);
+                    OPEN.set(friend.id, wrap);
+                    calcPositions();
+
+                    wrap.querySelector('[data-action="close"]').addEventListener('click', e=>{
+                        e.stopPropagation();
+                        closeWindow(friend.id);
+                    });
+                    wrap.querySelector('[data-action="min"]').addEventListener('click', e=>{
+                        e.stopPropagation();
+                        wrap.classList.toggle('minimized');
+                    });
+                    wrap.querySelector('[data-role="header"]').addEventListener('click', e=>{
+                        if(e.target.closest('button')) return;
+                        wrap.classList.toggle('minimized');
+                    });
+
+                    const input=wrap.querySelector('[data-role="input"]');
+                    const body=wrap.querySelector('[data-role="body"]');
+
+                    function send(){
+                        const txt=input.value.trim();
+                        if(!txt) return;
+                        body.insertAdjacentHTML('beforeend',
+                            `<div class="chat-msg you"><div class="chat-bubble"></div></div>`);
+                        body.lastElementChild.querySelector('.chat-bubble').textContent = txt;
+                        input.value='';
+                        body.scrollTop = body.scrollHeight;
+                        setTimeout(()=>{
+                            body.insertAdjacentHTML('beforeend',
+                                `<div class="chat-msg"><div class="chat-bubble">Đã nhận: ${txt}</div></div>`);
+                            body.scrollTop = body.scrollHeight;
+                        }, 700);
+                    }
+
+                    wrap.querySelector('[data-role="send"]').addEventListener('click', send);
+                    input.addEventListener('keydown', e=>{
+                        if(e.key==='Enter'){
+                            e.preventDefault();
+                            send();
+                        }
+                    });
+                    input.focus();
+                }
+
+                function closeWindow(fid){
+                const win=OPEN.get(fid);
+                if(!win) return;
+                win.remove();
+                OPEN.delete(fid);
+                calcPositions();
+                }
+
+                function focusWindow(fid){
+                const win=OPEN.get(fid);
+                if(!win) return;
+                // bring to "top" by re-inserting
+                win.parentNode.appendChild(win);
+                }
+
+                document.getElementById('friendList').addEventListener('click', e=>{
+                    const btn=e.target.closest('.friend-item');
+                    if(!btn) return;
+                    createChatWindow({
+                        id: btn.dataset.fid,
+                        name: btn.dataset.name,
+                        avatar: btn.dataset.avatar
+                    });
+                });
+
+                window.addEventListener('resize', calcPositions);
+            })();
+            </script>
+            <!-- Right Sidebar:END -->
+        </div>
+    </div>
+    <!-- Main content:END -->
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

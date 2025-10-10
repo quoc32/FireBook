@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>User Management</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <style>
+        body { background:#f0f2f5; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+        .navbar-brand { font-weight:700; color:#1365ff !important; }
+        .search-box { background:#f0f2f5; border:none; border-radius:20px; padding:6px 14px; width:230px; }
+        .search-box:focus { outline:0; box-shadow:none; background:#e4e6eb; }
+        .sidebar-sticky { position:sticky; top:70px; }
+        .story-card { height:160px; border-radius:12px; background:#fff; border:1px solid #ddd; display:flex; align-items:center; justify-content:center; font-weight:600; color:#555; }
+        .composer, .post-card { background:#fff; border-radius:8px; border:1px solid #ddd; }
+        .composer textarea { resize:none; border:none; box-shadow:none; }
+        .composer textarea:focus { outline:0; }
+        .btn-primary { background:#1b74e4; border-color:#1b74e4; }
+        .btn-primary:hover { background:#155ec0; }
+        .avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; }
+        .post-img { border-radius:8px; max-height:480px; object-fit:cover; width:100%; }
+        .action-btn { background:transparent; border:none; padding:6px 8px; border-radius:6px; font-weight:500; color:#555; }
+        .action-btn:hover { background:#f0f2f5; }
+        .right-card { background:#fff; border:1px solid #ddd; border-radius:8px; }
+        @media (max-width: 992px){
+            .left-col, .right-col { display:none; }
+            .search-box { width:140px; }
+        }
+    </style>
+</head>
+<body>
+  <!-- Nhúng fragment navbar -->
+  <div th:replace="fragments/navbar :: navbar"></div>
+
+
+  <main class="container-fluid mt-4">
+    <div class="row justify-content-center">
+      
+      <!-- Profile top header:BEGIN -->
+      <section class="col-12 mb-4">
+        <style>
+          /* Profile Header Enhancements */
+          .profile-card{
+        border:0;
+        border-radius:22px;
+        overflow:hidden;
+        box-shadow:0 4px 18px -4px rgba(0,0,0,.15);
+        position:relative;
+        background:#fff;
+          }
+          .profile-cover{
+        position:relative;
+        height:230px;
+        background:
+          radial-gradient(circle at 20% 20%,rgba(255,255,255,.25),transparent 60%),
+          linear-gradient(135deg,#0d5ef4,#6aa9ff);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        isolation:isolate;
+          }
+          .profile-cover::after{
+        content:"";
+        position:absolute;
+        inset:0;
+        background:
+          linear-gradient(to bottom,rgba(0,0,0,.15),rgba(0,0,0,.45));
+        opacity:.55;
+        pointer-events:none;
+        mix-blend-mode:multiply;
+          }
+          #user-cover{
+        object-fit:cover;
+        filter:brightness(.9);
+        transition:opacity .5s ease;
+          }
+          .profile-avatar-wrap{
+        position:absolute;
+        left:38px;
+        bottom:-64px;
+        display:flex;
+        align-items:end;
+        z-index:10;
+          }
+          #user-avatar{
+        width:150px;
+        height:150px;
+        border-radius:50%;
+        object-fit:cover;
+        border:5px solid #fff;
+        box-shadow:0 6px 18px -4px rgba(0,0,0,.35);
+        background:#fff;
+        transition:transform .4s cubic-bezier(.4,.14,.18,1),box-shadow .4s;
+          }
+          #user-avatar:hover{
+        transform:translateY(-4px);
+        box-shadow:0 10px 28px -6px rgba(0,0,0,.4);
+          }
+          .profile-body{
+        padding:92px 2.2rem 1.2rem;
+          }
+          .profile-body h4{
+        font-weight:700;
+        letter-spacing:.3px;
+          }
+        .profile-stats li{
+          position:relative;
+          padding-left:20px;
+        }
+        .profile-stats li::before{
+          content:"";
+          position:absolute;
+          top:50%;
+          left:0;
+          width:10px;
+          height:10px;
+          border-radius:50%;
+          background:linear-gradient(135deg,#1b74e4,#6aa9ff);
+          transform:translateY(-50%);
+          opacity:.7;
+        }
+          .profile-actions .btn{
+        font-weight:500;
+        backdrop-filter:blur(6px);
+          }
+          .profile-actions .btn-outline-primary{
+        border-color:#1b74e4;
+          }
+          .profile-tabs-bar{
+        background:#ffffffd9;
+        backdrop-filter:blur(8px);
+        padding:.35rem 1.8rem 0;
+        border-top:1px solid #e4e6eb;
+          }
+          #profile-tabs{
+        position:relative;
+        gap:.25rem;
+          }
+          #profile-tabs .nav-link{
+        position:relative;
+        border:0;
+        background:transparent;
+        color:#59626d;
+        font-weight:500;
+        border-radius:10px 10px 0 0;
+        padding:.65rem 1.05rem;
+        transition:color .25s, background .25s;
+          }
+          #profile-tabs .nav-link:hover{
+        background:#f0f4f9;
+        color:#1b74e4;
+          }
+          #profile-tabs .nav-link.active{
+        color:#0d5ef4;
+        font-weight:600;
+          }
+          #profile-tabs .nav-link.active::after{
+        content:"";
+        position:absolute;
+        left:12%;
+        right:12%;
+        bottom:2px;
+        height:3px;
+        border-radius:3px;
+        background:linear-gradient(90deg,#0d5ef4,#6aa9ff);
+        box-shadow:0 0 0 1px #ffffff;
+          }
+          /* Responsive tweaks */
+          @media (max-width: 992px){
+        .profile-cover{height:180px;}
+        #user-avatar{width:110px;height:110px;bottom:-48px;}
+        .profile-body{padding:72px 1.25rem 1rem;}
+          }
+          @media (max-width: 576px){
+        .profile-body h4{font-size:1.15rem;}
+        .profile-stats li{margin-right:.75rem !important;}
+        #profile-tabs .nav-link{padding:.55rem .75rem;font-size:.85rem;}
+          }
+        </style>
+
+        <div class="profile-card">
+          
+          <div class="profile-cover">
+            <!-- Cover image (hidden until set) -->
+            <img id="user-cover" src="" alt="cover" class="w-100 h-100 position-absolute top-0 start-0 d-none">
+            <div class="profile-avatar-wrap">
+              <img
+                id="user-avatar"
+                src="/img/image1.png"
+                alt="avatar">
+              <script>
+                (function(){
+                  try{
+                    const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                    const url = auth?.avatar_url || auth?.avatar;
+                    if(url){
+                        const img = document.getElementById('user-avatar');
+                        if(img) img.src = url;
+                    }
+                    const coverUrl = auth?.cover_photo_url || auth?.cover_photo;
+                    console.log('Cover URL:', coverUrl);
+                    if(coverUrl){
+                        const coverImg = document.getElementById('user-cover');
+                        if(coverImg){
+                          coverImg.src = coverUrl;
+                          coverImg.classList.remove('d-none');
+                        }
+                    }
+                  }catch(_){}
+                })();
+              </script>
+            </div>
+          </div>
+
+          <!-- Phần thân Profile Header:BEGIN -->
+          <div class="profile-body">
+            <div class="d-flex flex-column flex-md-row align-items-md-end align-items-start">
+              <div class="me-md-auto">
+                <h4 class="mb-1" id="user-full-name">User Name</h4>
+                <p class="text-muted small mb-2" id="user-username">@bio</p>
+                <script>
+                (function(){
+                  const el = document.getElementById('user-full-name');
+                  if(!el) return;
+                  try{
+                  const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                  el.textContent = auth?.full_name?.trim() || 'Trang cá nhân';
+                  }catch(_){
+                  el.textContent = 'Trang cá nhân';
+                  }
+                  const el2 = document.getElementById('user-username');
+                  if(!el2) return;
+                  try{
+                  const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                  el2.textContent = auth?.bio?.trim() || 'Bio ngắn về người dùng ở đây.';
+                  }catch(_){
+                  el2.textContent = 'Bio ngắn về người dùng ở đây.';
+                  }
+                })();
+                </script>
+
+                <p class="mb-2 small text-secondary d-none" id="user-bio">Short bio about the user goes here.</p>
+                <ul class="list-inline small text-muted mb-0 profile-stats">
+                  <li class="list-inline-item me-4">
+                    <span class="fw-semibold" id="user-post-count">0</span> Posts
+                  </li>
+                  <li class="list-inline-item me-4">
+                    <span class="fw-semibold" id="user-friend-count">0</span> Friends
+                  </li>
+                  <li class="list-inline-item d-none" id="user-location-wrap">
+                    <span id="user-location">Location</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="mt-3 mt-md-0 d-flex gap-2 flex-wrap profile-actions">
+                <!-- New: open modal to change avatar / cover / bio -->
+                <button class="btn btn-sm btn-outline-primary" id="btn-open-profile-modal"
+                  data-bs-toggle="modal" data-bs-target="#profileEditModal">
+                  <i class="bi bi-pencil me-1"></i>Edit Profile
+                </button>
+                <button class="btn btn-sm btn-primary d-none" id="btn-add-friend" data-action="add-friend">
+                  <i class="bi bi-person-plus me-1"></i>Add Friend
+                </button>
+                <button class="btn btn-sm btn-secondary d-none" id="btn-request-sent" disabled>
+                  <i class="bi bi-hourglass-split me-1"></i>Request Sent
+                </button>
+                <button class="btn btn-sm btn-outline-danger d-none" id="btn-unfriend" data-action="unfriend">
+                  <i class="bi bi-person-dash me-1"></i>Unfriend
+                </button>
+                <button class="btn btn-sm btn-outline-secondary d-none" id="btn-message" data-action="message">
+                  <i class="bi bi-chat-dots me-1"></i>Message
+                </button>
+              </div>
+
+            </div>
+          </div>
+          <!-- Phần thân Profile Header:END -->
+          
+          <div class="profile-tabs-bar">
+            <nav class="nav nav-tabs border-0" id="profile-tabs">
+              <a class="nav-link active" href="#posts" data-tab="posts">Posts</a>
+              <a class="nav-link" href="#about" data-tab="about">About</a>
+              <a class="nav-link" href="#friends" data-tab="friends">Friends</a>
+              <a class="nav-link" href="#photos" data-tab="photos">Photos</a>
+            </nav>
+          </div>
+
+          <!-- Modal: Edit avatar / cover / bio -->
+          <div class="modal fade" id="profileEditModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+              <form id="profile-edit-form">
+                <div class="modal-content">
+
+                  <div class="modal-header">
+                    <h5 class="modal-title">Customize Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+
+                  <div class="modal-body">
+                    <div class="row g-3">
+                    <!-- Thay Avatar -->
+                    <div class="col-12">
+                      <label class="form-label fw-semibold small mb-1">Avatar</label>
+                      <div class="d-flex align-items-center gap-3">
+                        <img id="preview-avatar" src="/img/image1.png" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid #e5e5e5;">
+                        <div>
+                          <input type="file" accept="image/*" id="input-avatar" class="form-control form-control-sm">
+                          <div class="form-text">Square image recommended (>= 256x256)</div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Thay cover image -->
+                    <div class="col-12">
+                      <label class="form-label fw-semibold small mb-1">Cover Image</label>
+                      <div class="border rounded p-2 position-relative"></div>
+                        <img id="preview-cover" class="w-100" style="max-height:180px;object-fit:cover;border-radius:6px;" src="" alt="">
+                        <div class="mt-2">
+                          <input type="file" accept="image/*" id="input-cover" class="form-control form-control-sm">
+                        <div class="form-text">Recommended size >= 1200x400</div>
+                      </div>
+                    </div>
+                    <!-- Thay Bio -->
+                  </div>
+                      <div class="col-12">
+                      <label for="input-bio" class="form-label fw-semibold small mb-1">Bio</label>
+                      <textarea id="input-bio" class="form-control" rows="3" maxlength="300" placeholder="Write a short bio..."></textarea>
+                      <div class="form-text"><span id="bio-count">0</span>/300</div>
+                    </div>
+
+                  </div>
+
+                  <div class="alert alert-danger py-2 px-3 small d-none mt-3" id="profile-edit-error"></div>
+                  <div class="alert alert-success py-2 px-3 small d-none mt-3" id="profile-edit-success">Saved.</div>
+                
+                  <!-- footer -->
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-sm btn-primary" id="btn-save-profile">
+                      <span class="save-text">Save Changes</span>
+                      <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                  </div>
+
+                </div>
+              </form> 
+            </div>
+          </div>
+
+        </div>
+        
+        <script>
+        (function(){
+          // Force showing edit buttons immediately
+          document.getElementById('btn-open-profile-modal')?.classList.remove('d-none');
+          document.getElementById('btn-edit-profile')?.classList.remove('d-none');
+
+          const auth = (()=>{try{return JSON.parse(localStorage.getItem('auth')||'{}')}catch(_){return {}}})();
+          const avatarImg = document.getElementById('user-avatar');
+          const coverImg = document.getElementById('user-cover');
+
+          if(avatarImg) document.getElementById('preview-avatar').src = avatarImg.src;
+          if(coverImg && coverImg.src) {
+            document.getElementById('preview-cover').src = coverImg.src;
+          }
+
+          const inputAvatar = document.getElementById('input-avatar');
+          const inputCover = document.getElementById('input-cover');
+          const inputBio = document.getElementById('input-bio');
+          const bioCount = document.getElementById('bio-count');
+          const errorBox = document.getElementById('profile-edit-error');
+          const successBox = document.getElementById('profile-edit-success');
+          const form = document.getElementById('profile-edit-form');
+          const saveBtn = document.getElementById('btn-save-profile');
+          const spinner = saveBtn?.querySelector('.spinner-border');
+          const saveText = saveBtn?.querySelector('.save-text');
+
+          if(inputBio){
+            inputBio.value = auth?.bio || '';
+            bioCount.textContent = inputBio.value.length;
+            inputBio.addEventListener('input', ()=> bioCount.textContent = inputBio.value.length);
+          }
+
+          function previewFile(input, imgEl){
+            if(!input?.files?.[0]) return;
+            const f = input.files[0];
+            const url = URL.createObjectURL(f);
+            imgEl.src = url;
+          }
+
+          inputAvatar?.addEventListener('change', ()=> previewFile(inputAvatar, document.getElementById('preview-avatar')));
+          inputCover?.addEventListener('change', ()=> {
+          const el = document.getElementById('preview-cover');
+          previewFile(inputCover, el);
+          if(el.src && coverImg){
+            coverImg.classList.remove('d-none');
+            coverImg.src = el.src;
+          }
+          });
+
+          form?.addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            errorBox.classList.add('d-none');
+            successBox.classList.add('d-none');
+            saveBtn.disabled = true;
+            spinner.classList.remove('d-none');
+            saveText.classList.add('d-none');
+
+            try {
+              // 1. Upload selected files (avatar first, then cover) to /api/media/upload
+              const uploadFd = new FormData();
+              const avatarFile = inputAvatar?.files?.[0] || null;
+              const coverFile  = inputCover?.files?.[0]  || null;
+
+              if (avatarFile) uploadFd.append('files', avatarFile);
+              if (coverFile)  uploadFd.append('files', coverFile);
+
+              let uploadedAvatarUrl, uploadedCoverUrl;
+
+              if (uploadFd.has('files')) {
+              const uploadResp = await fetch('/api/media/upload', {
+                method: 'POST',
+                body: uploadFd
+              });
+              if (!uploadResp.ok) throw new Error('Upload failed: ' + uploadResp.status);
+              const uploadData = await uploadResp.json().catch(()=> ({}));
+              const urls = Array.isArray(uploadData.urls) ? uploadData.urls : [];
+
+              // Map returned urls to avatar / cover in the same order we appended
+              if (avatarFile && coverFile && urls.length >= 2) {
+                uploadedAvatarUrl = "http://localhost:8080" + urls[0];
+                uploadedCoverUrl  = "http://localhost:8080" + urls[1];
+              } else if (avatarFile && urls.length >= 1) {
+                uploadedAvatarUrl = "http://localhost:8080" + urls[0];
+              } else if (coverFile && urls.length >= 1) {
+                uploadedCoverUrl = "http://localhost:8080" + urls[0];
+              }
+              }
+
+              // 2. Build partial update payload
+              const payload = {};
+              if (inputBio) {
+              const bioVal = inputBio.value.trim();
+              if (bioVal.length) payload.bio = bioVal;
+              }
+              if (uploadedAvatarUrl) payload.avatar_url = uploadedAvatarUrl;
+              if (uploadedCoverUrl) payload.cover_photo_url = uploadedCoverUrl;
+
+              // If nothing to update, just finish gracefully
+              if (Object.keys(payload).length === 0) {
+              successBox.classList.remove('d-none');
+              } else {
+                
+              const userId = auth?.id || auth?.user_id || 1; // fallback id
+              const updateResp = await fetch(`/api/users/${userId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+              if (!updateResp.ok) throw new Error('Update failed: ' + updateResp.status);
+              await updateResp.json().catch(()=> ({}));
+
+              // 3. Update UI
+              if (uploadedAvatarUrl && avatarImg) {
+                avatarImg.src = uploadedAvatarUrl;
+                const pvA = document.getElementById('preview-avatar');
+                if (pvA) pvA.src = uploadedAvatarUrl;
+              }
+              if (uploadedCoverUrl && coverImg) {
+                coverImg.src = uploadedCoverUrl;
+                coverImg.classList.remove('d-none');
+                const pvC = document.getElementById('preview-cover');
+                if (pvC) pvC.src = uploadedCoverUrl;
+              }
+              if (payload.bio) {
+                const bioInline = document.getElementById('user-username');
+                if (bioInline) bioInline.textContent = payload.bio;
+              }
+
+              // 4. Persist to localStorage auth
+              if (payload.bio) auth.bio = payload.bio;
+              if (uploadedAvatarUrl) auth.avatar_url = uploadedAvatarUrl;
+              if (uploadedCoverUrl) auth.cover_photo_url = uploadedCoverUrl;
+              localStorage.setItem('auth', JSON.stringify(auth));
+
+              successBox.classList.remove('d-none');
+
+              setTimeout(()=>{
+                const modalEl = document.getElementById('profileEditModal');
+                if (window.bootstrap) {
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal && modal.hide();
+                }
+              }, 900);
+              }
+
+            } catch(err) {
+              errorBox.textContent = err.message || 'Error';
+              errorBox.classList.remove('d-none');
+            } finally {
+              saveBtn.disabled = false;
+              spinner.classList.add('d-none');
+              saveText.classList.remove('d-none');
+            }
+
+          });
+
+        })();
+        </script>
+
+      </section>
+      <!-- Profile top header:END -->
+
+      <!-- Feed:BEGIN -->
+      <section class="col-12 col-lg-6 mb-4">
+
+        <!-- Nhúng fragment postComposer -->
+        <div th:replace="fragments/postComposer :: postComposer"></div>
+          <!-- Nhúng fragment postComposerModal -->
+        <div th:replace="fragments/postComposer :: postComposerModal"></div>
+        <!-- Nhúng fragment postSegment -->
+        <div th:replace="~{fragments/postSegment :: postSegment(
+          fetchUrl=@{/api/posts/user/{id}(id=${viewingUserId})},
+          isSelfProfile=${'true'}
+        )}"></div>
+
+        <!-- Infinite scroll sentinel -->
+        <div id="feed-end" class="text-center text-muted py-3 small" aria-live="polite">Loading...</div>
+      </section>
+      <!-- Feed:END -->
+
+      <!-- Right sidebar:END -->
+      <aside class="col-12 col-lg-3 mb-4 right-col">
+
+        <div class="right-card p-3 mb-3">
+          <h6 class="fw-semibold mb-3">People you may know</h6>
+          <div class="d-flex align-items-center mb-3">
+            <img src="/static/img/avatar-user.png" class="avatar me-2" alt="avatar">
+            <div class="flex-grow-1">
+              <div class="small fw-semibold">Emily Stone</div>
+              <form action="/friends/5/request" method="post">
+                <button class="btn btn-sm btn-outline-primary mt-1" type="submit">Add</button>
+              </form>
+            </div>
+          </div>
+          <div class="d-flex align-items-center mb-3">
+            <img src="/static/img/avatar-user.png" class="avatar me-2" alt="avatar">
+            <div class="flex-grow-1">
+              <div class="small fw-semibold">Mark Lee</div>
+              <form action="/friends/6/request" method="post">
+                <button class="btn btn-sm btn-outline-primary mt-1" type="submit">Add</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-card p-3">
+          <h6 class="fw-semibold mb-3">Trending</h6>
+          <ul class="list-unstyled mb-0 small">
+            <li class="mb-2">
+              <a href="/topics/java" class="text-decoration-none">#Java</a>
+              <span class="text-muted ms-1">120 posts</span>
+            </li>
+            <li class="mb-2">
+              <a href="/topics/spring" class="text-decoration-none">#Spring</a>
+              <span class="text-muted ms-1">85 posts</span>
+            </li>
+            <li class="mb-2">
+              <a href="/topics/webdev" class="text-decoration-none">#WebDev</a>
+              <span class="text-muted ms-1">64 posts</span>
+            </li>
+          </ul>
+        </div>
+
+      </aside>
+      <!-- Right sidebar:END -->
+
+    </div>
+  </main>
+
+  <script>
+  (function(){
+    const ta=document.querySelector('.composer textarea');
+    if(ta){
+      ta.addEventListener('input',()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
+    }
+    const sentinel=document.getElementById('feed-end');
+    if(!sentinel) return;
+    let loading=false;
+    async function loadMore(){
+      if(loading) return;
+      loading=true;
+      try{
+        const lastId=[...document.querySelectorAll('article[data-id]')].pop()?.dataset.id||'';
+        const r=await fetch('/posts?after='+encodeURIComponent(lastId), {headers:{'X-Requested-With':'XMLHttpRequest'}});
+        if(r.ok){
+          const html=await r.text();
+          if(html.trim()){
+            sentinel.insertAdjacentHTML('beforebegin', html);
+          }else{
+            sentinel.textContent='No more posts';
+            observer.disconnect();
+          }
+        }
+      }catch(e){console.error(e);}
+      loading=false;
+    }
+    const observer=new IntersectionObserver(entries=>{
+      if(entries.some(e=>e.isIntersecting)) loadMore();
+    },{rootMargin:'400px'});
+    observer.observe(sentinel);
+  })();
+  </script>
+  
+
+  <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+### Home
+GET http://localhost:8080
+
+### ===========================================
+### USER API TESTS
+### ===========================================
+
+### 1. Get all users
+GET http://localhost:8080/users/api
+Cookie: JSESSIONID=EBCBC3B0D42823C290EDA3DA7C3623BF
+
+### 2. Get user by ID (existing user)
+GET http://localhost:8080/api/users/2
+Cookie: JSESSIONID=EBCBC3B0D42823C290EDA3DA7C3623BF
+
+### 3. Get user by ID (non-existing user)
+GET http://localhost:8080/users/999
+
+### 4. Create new user (valid data)
+POST http://localhost:8080/api/users/register
+Content-Type: application/json
+
+{
+  "full_name": "quoc vu",
+  "email": "quoc5@gmail.com",
+  "password_hash": "123",
+  "first_name": "Quang",
+  "last_name": "Quang",
+  "gender": "male",
+  "date_of_birth": "2001-05-10",
+  "avatar_url": "https://example.com/avatar.jpg",
+  "cover_photo_url": "https://example.com/cover.jpg",
+  "bio": "Hello, I am Quang",
+  "school_id": "SV23110205",
+  "academic_year": "2020-2024",
+  "role": "student",
+  "phone": "+84-912345678",
+  "website": "https://diep.dev",
+  "country": "Vietnam",
+  "city": "HCMC",
+  "education": "HCMUTE",
+  "workplace": "Student",
+  "facebook_url": "https://facebook.com/diep",
+  "instagram_url": "https://instagram.com/diep",
+  "linkedin_url": "https://linkedin.com/in/diep",
+  "twitter_url": "https://twitter.com/diep"
+}
+
+### 5. Create user with minimal data (only required fields)
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "full_name": "John Doe",
+  "email": "john@example.com",
+  "password_hash": "password123"
+}
+
+### 6. Create user with missing required fields (should fail)
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "full_name": "Jane Doe",
+  "email": "jane@example.com"
+}
+
+### 7. Create user with duplicate email (should fail)
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "full_name": "Duplicate User",
+  "email": "diep@example.com",
+  "password_hash": "password123"
+}
+
+### 8. Update user (valid data)
+PUT http://localhost:8080/users/1
+Content-Type: application/json
+
+{
+  "full_name": "Diep Updated",
+  "email": "diep.updated@example.com",
+  "bio": "Updated bio information",
+  "phone": "+84-987654321",
+  "city": "Ho Chi Minh City"
+}
+
+### 9. Update user with partial data
+PUT http://localhost:8080/api/users/1
+Content-Type: application/json
+Cookie: JSESSIONID=0414ACA542F693A270B50EC8DA838EB3
+
+{
+  "bio": "Just updating bio",
+  "avatar_url": "https://example.com/new-avatar.jpg",
+  "cover_photo_url": "https://example.com/new-cover.jpg"
+}
+
+### 10. GET user by email
+GET http://localhost:8080/api/users/find/by-email?email=quoc4@gmail.com
+Cookie: JSESSIONID=8A52D464FEC93052717FC6F98A22FAC7
+
+### 11. Update non-existing user (should fail)
+PUT http://localhost:8080/users/999
+Content-Type: application/json
+
+{
+  "full_name": "Non Existing User"
+}
+
+### 12. Delete existing user
+DELETE http://localhost:8080/users/2
+
+### 13. Delete non-existing user (should fail)
+DELETE http://localhost:8080/users/999
+
+### ===========================================
+### ERROR HANDLING TESTS
+### ===========================================
+
+### 14. Test invalid JSON format
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "full_name": "Invalid JSON",
+  "email": "invalid@example.com",
+  "password_hash": "password123"
+  // Missing closing brace
+
+### 15. Test empty request body
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{}
+
+### 16. Test with null values
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "full_name": null,
+  "email": "null@example.com",
+  "password_hash": "password123"
+}
+
+### ===========================================
+### SUCCESS SCENARIOS
+### ===========================================
+
+### 17. Complete user creation and update flow
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "full_name": "Test User",
+  "email": "test@example.com",
+  "password_hash": "test123",
+  "first_name": "Test",
+  "last_name": "User",
+  "gender": "female",
+  "date_of_birth": "1995-12-25",
+  "role": "lecturer",
+  "bio": "Test user for API testing"
+}
+
+### 18. Update the test user
+PUT http://localhost:8080/users/3
+Content-Type: application/json
+
+{
+  "bio": "Updated test user bio",
+  "phone": "+84-123456789",
+  "education": "PhD in Computer Science"
+}
+
+### 19. Get the updated test user
+GET http://localhost:8080/users/3
+
+### 20. Clean up - delete test user
+DELETE http://localhost:8080/users/3

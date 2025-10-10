@@ -1,0 +1,611 @@
+<!-- fragments.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8">
+    <title>QDTBook - Home</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <style>
+      body { background:#f0f2f5; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+      .navbar-brand { font-weight:700; color:#1365ff !important; }
+      .search-box { background:#f0f2f5; border:none; border-radius:20px; padding:6px 14px; width:230px; }
+      .search-box:focus { outline:0; box-shadow:none; background:#e4e6eb; }
+      .sidebar-sticky { position:sticky; top:70px; }
+      .story-card { height:160px; border-radius:12px; background:#fff; border:1px solid #ddd; display:flex; align-items:center; justify-content:center; font-weight:600; color:#555; }
+      .composer, .post-card { background:#fff; border-radius:8px; border:1px solid #ddd; }
+      .composer textarea { resize:none; border:none; box-shadow:none; }
+      .composer textarea:focus { outline:0; }
+      .btn-primary { background:#1b74e4; border-color:#1b74e4; }
+      .btn-primary:hover { background:#155ec0; }
+      .avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; }
+      .post-img { border-radius:8px; max-height:480px; object-fit:cover; width:100%; }
+      .action-btn { background:transparent; border:none; padding:6px 8px; border-radius:6px; font-weight:500; color:#555; }
+      .action-btn:hover { background:#f0f2f5; }
+      .right-card { background:#fff; border:1px solid #ddd; border-radius:8px; }
+      @media (max-width: 992px){
+          .left-col, .right-col { display:none; }
+          .search-box { width:140px; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- Navbar:BEGIN -->
+    <nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+
+        <div class="container-fluid px-3">
+            <!-- Tiêu đề -->
+            <a class="navbar-brand" href="/">QDTBook</a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                    aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Ô tìm kiếm -->
+            <form class="d-none d-lg-block ms-3 me-3">
+                <input class="search-box" type="text" placeholder="Tìm kiếm...">
+            </form>
+
+            <!-- Các items bên phải và giữa -->
+            <div class="collapse navbar-collapse" id="mainNav">
+                <!-- Danh sách các Tab ở giữa -->
+                <ul class="navbar-nav mx-auto top-tabs position-relative tabs-animate">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" data-page="home" aria-label="Trang chủ" title="Trang chủ">
+                            <img src="/img/home-icon.png" class="nav-ico" alt="">
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="friends" aria-label="Bạn bè" title="Bạn bè">
+                            <img src="/img/friends-icon.png" class="nav-ico" alt="">
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="groups" aria-label="Nhóm" title="Nhóm">
+                            <img src="/img/icons/groups.svg" class="nav-ico" alt="">
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="marketplace" aria-label="Marketplace" title="Marketplace">
+                            <img src="/img/icons/marketplace.svg" class="nav-ico" alt="">
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="video" aria-label="Video" title="Video">
+                            <img src="/img/icons/video.svg" class="nav-ico" alt="">
+                        </a>
+                    </li>
+                    <span class="tab-indicator"></span>
+                </ul>
+                <style>
+                    .tabs-animate .nav-link .nav-ico{
+                        width:26px;
+                        height:26px;
+                        display:block;
+                        filter:grayscale(.15);
+                        transition:filter .25s, transform .25s;
+                    }
+                    .tabs-animate .nav-link.active .nav-ico{filter:none;}
+                    .tabs-animate .nav-link:hover .nav-ico{transform:translateY(-2px);}
+                    @media (max-width:992px){
+                        .tabs-animate .nav-link .nav-ico{width:24px;height:24px;}
+                    }
+                    .tabs-animate{--ti-speed:300ms;}
+                    .tabs-animate .nav-link{
+                        position:relative;
+                        font-weight:500;
+                        padding:10px 18px;
+                        transition:color .25s, background .25s;
+                        border-radius:10px;
+                        overflow:hidden;
+                    }
+                    .tabs-animate .nav-link:not(.active){color:#5a5f65;}
+                    .tabs-animate .nav-link:hover{background:#eef2f7;}
+                    .tabs-animate .nav-link:after{
+                        content:"";
+                        position:absolute;inset:0;
+                        background:radial-gradient(circle at 50% 120%, rgba(27,116,228,.18), transparent 70%);
+                        opacity:0;transform:scale(.6);
+                        transition:opacity .4s,var(--ti-speed) transform;
+                    }
+                    .tabs-animate .nav-link:hover:after{opacity:1;transform:scale(1);}
+                    .tabs-animate .nav-link.active{color:#1b74e4;background:rgba(27,116,228,.10);}
+                    .tabs-animate .nav-link.active:after{display:none;}
+                    .tabs-animate .tab-indicator{
+                        position:absolute;
+                        bottom:4px;
+                        height:3px;
+                        background:linear-gradient(90deg,#1b74e4,#5aa2ff);
+                        border-radius:3px;
+                        width:0;
+                        left:0;
+                        transform:translateX(var(--ti-x,0));
+                        transition:width var(--ti-speed) cubic-bezier(.6,.2,.2,1),
+                                   transform var(--ti-speed) cubic-bezier(.6,.2,.2,1);
+                        box-shadow:0 0 6px -1px rgba(27,116,228,.6);
+                        pointer-events:none;
+                    }
+                    @media (max-width:992px){
+                        .tabs-animate .nav-link{padding:10px 14px;}
+                    }
+                </style>
+                <script>
+                    (function(){
+                        const wrapper=document.querySelector('.tabs-animate');
+                        if(!wrapper) return;
+                        const indicator=wrapper.querySelector('.tab-indicator');
+                        const links=[...wrapper.querySelectorAll('.nav-link')];
+                        function moveIndicator(el){
+                            const r=el.getBoundingClientRect();
+                            const pr=wrapper.getBoundingClientRect();
+                            const w=r.width*0.60;
+                            const center=r.left - pr.left + r.width/2 - w/2;
+                            indicator.style.width=w+'px';
+                            indicator.style.setProperty('--ti-x',center+'px');
+                        }
+                        function setActive(el){
+                            links.forEach(a=>a.classList.remove('active'));
+                            el.classList.add('active');
+                            moveIndicator(el);
+                        }
+                        requestAnimationFrame(()=>{
+                            const current=wrapper.querySelector('.nav-link.active')||links[0];
+                            if(current) moveIndicator(current);
+                        });
+                        links.forEach(a=>{
+                            a.addEventListener('click',e=>{e.preventDefault();setActive(a);});
+                            a.addEventListener('keydown',e=>{
+                                if(e.key==='Enter'||e.key===' '){e.preventDefault();setActive(a);}
+                            });
+                        });
+                        window.addEventListener('resize',()=>{
+                            const active=wrapper.querySelector('.nav-link.active');
+                            if(active) moveIndicator(active);
+                        });
+                    })();
+                </script>
+
+                <!-- Phần bên phải: Thông báo, Avatar -->
+                <ul class="navbar-nav ms-auto align-items-center gap-3 enhanced-userbar">
+
+                    <!-- Notifications -->
+                    <li class="nav-item dropdown position-relative">
+                        <button class="btn-reset notif-btn-neo" id="notifBtn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Thông báo (3 mới)">
+                            <span class="notif-ring"></span>
+                            <img src="/img/bell-icon.png" alt="" width="22" height="22" draggable="false">
+                            <span class="notif-badge pulse" data-count="3">3</span>
+                        </button>
+                        <div class="dropdown-menu notif-menu dropdown-menu-end shadow-lg border-0 p-0" aria-labelledby="notifBtn">
+                            <div class="nm-header d-flex align-items-center">
+                                <span class="fw-semibold">Thông báo</span>
+                                <button class="btn-mark-read" id="markAllNotif" title="Đánh dấu đã đọc">Đã đọc</button>
+                            </div>
+                            <div class="nm-list" id="notifList">
+                                <a href="#" class="nm-item new">
+                                    <div class="dot"></div>
+                                    <div class="txt">
+                                        <strong>Linh Trần</strong> đã thích bài viết của bạn
+                                        <div class="time">2 phút trước</div>
+                                    </div>
+                                </a>
+                                <a href="#" class="nm-item new">
+                                    <div class="dot"></div>
+                                    <div class="txt">
+                                        <strong>An Nguyễn</strong> đã bình luận: "OK nhé!"
+                                        <div class="time">10 phút trước</div>
+                                    </div>
+                                </a>
+                                <a href="#" class="nm-item new">
+                                    <div class="dot"></div>
+                                    <div class="txt">
+                                        Bạn có 1 lời mời kết bạn mới
+                                        <div class="time">30 phút trước</div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="nm-footer">
+                                <a href="#" class="view-all">Xem tất cả</a>
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- User avatar / menu -->
+                    <li class="nav-item dropdown user-dropdown">
+                        <!-- Avatar -->
+                        <button class="avatar-trigger" id="userMenuBtn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu">
+                            <span class="avatar-ring"></span>
+                            <img id="navUserAvatar" src="/img/image1.png" class="avatar-img" alt="User" width="42" height="42">
+                            <script>
+                                (function(){
+                                    try{
+                                        const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                                        const url = auth?.avatar_url || auth?.avatar;
+                                        if(url){
+                                            const img = document.getElementById('navUserAvatar');
+                                            if(img) img.src = url;
+                                        }
+                                    }catch(_){}
+                                })();
+                            </script>
+                        </button>
+                        <!-- Dropdown -->
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 usermenu-scale" aria-labelledby="userMenuBtn" style="min-width:280px; padding: 1rem;">
+                            <li class="px-3 pt-3 pb-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2 position-relative">
+                                        <img id="navModalUserAvatar" src="/img/image1.png" style="width:52px;height:52px;border-radius:18px;object-fit:cover;" alt="">
+                                         <script>
+                                            (function(){
+                                                try{
+                                                    const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                                                    const url = auth?.avatar_url || auth?.avatar;
+                                                    if(url){
+                                                        const img = document.getElementById('navModalUserAvatar');
+                                                        if(img) img.src = url;
+                                                    }
+                                                }catch(_){}
+                                            })();
+                                        </script>
+                                        <span class="status-dot" title="Online"></span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold lh-sm" id="userFullName">Người dùng</div>
+                                        <script>
+                                        (function(){
+                                            const el = document.getElementById('userFullName');
+                                            if(!el) return;
+                                            try{
+                                                const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                                                el.textContent = auth?.full_name?.trim() || 'Người dùng';
+                                            }catch(_){
+                                                el.textContent = 'Người dùng';
+                                            }
+                                        })();
+                                        </script>
+
+                                        <a href="/views/user" class="small text-decoration-none opacity-75 hover-text">Xem trang cá nhân</a>
+                                    </div>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider my-2"></li>
+                            <!-- Added wrapper class to control spacing without using outer margins that caused clipping -->
+                            <li><a class="dropdown-item icon-link menu-fix" href="/views/user"><i class="bi bi-person"></i><span>Trang cá nhân</span></a></li>
+                            <li><a class="dropdown-item icon-link menu-fix" href="#"><i class="bi bi-sliders2"></i><span>Cài đặt & quyền riêng tư</span></a></li>
+                            <li><a class="dropdown-item icon-link menu-fix" href="#"><i class="bi bi-life-preserver"></i><span>Trợ giúp & hỗ trợ</span></a></li>
+                            <li><a class="dropdown-item icon-link menu-fix" href="#"><i class="bi bi-moon-stars"></i><span>Chế độ tối</span></a></li>
+                            <li><a class="dropdown-item icon-link menu-fix" href="#"><i class="bi bi-arrow-repeat"></i><span>Chuyển tài khoản</span></a></li>
+                            <li><hr class="dropdown-divider my-2"></li>
+                            <li>
+                                <a class="dropdown-item text-danger icon-link menu-fix" href="#" id="logoutBtn">
+                                    <i class="bi bi-box-arrow-right"></i><span>Đăng xuất</span>
+                                </a>
+                            </li>
+                            <style>
+                                /* Fix: prevent hover background from being sliced by container edges.
+                                   Remove horizontal margins; use internal padding & safe focus ring. */
+                                .user-dropdown .dropdown-item.menu-fix{
+                                    margin:0;               /* remove outer margin causing clipping */
+                                    border-radius:14px;
+                                    padding:.6rem 1rem;
+                                    box-sizing:border-box;
+                                }
+                                .user-dropdown .dropdown-item.menu-fix + .dropdown-item.menu-fix{
+                                    margin-top:4px;
+                                }
+                                .user-dropdown .dropdown-menu{
+                                    padding:.55rem .55rem  .7rem; /* compensate removed item margins */
+                                    overflow:visible; /* ensure glow/shadow not clipped */
+                                }
+                                .user-dropdown .dropdown-item.menu-fix:hover{
+                                    background:linear-gradient(145deg,#f0f6ff,#e3eefb);
+                                    padding-left:1.15rem; /* slightly less to avoid overflow */
+                                }
+                                .user-dropdown .dropdown-item.menu-fix:focus-visible{
+                                    outline:2px solid #1b74e4;
+                                    outline-offset:2px;
+                                }
+                            </style>
+                        </ul>
+                    </li>
+                </ul>
+
+                <style>
+                .enhanced-userbar .btn-reset{background:transparent;border:0;padding:0;margin:0;font:inherit;color:inherit;}
+                .enhanced-userbar{--neo-bg:#ffffff;--neo-grad:linear-gradient(145deg,#ffffff,#e6eef9);--accent:#1b74e4;--accent-grad:linear-gradient(135deg,#1b74e4,#559dff);--danger:#dc3545;--radius:18px;--drop:0 4px 14px -4px rgba(20,60,120,.25);}
+
+                @media (prefers-color-scheme:dark){
+                 .enhanced-userbar{--neo-bg:#1f2530;--neo-grad:linear-gradient(145deg,#242b36,#1a2029);--accent:#4c95ff;--accent-grad:linear-gradient(135deg,#4c95ff,#74b6ff);--danger:#ff4c5d;}
+                 .notif-menu,.usermenu-scale{background:#1f2530 !important;color:#dce4ef;}
+                 .notif-btn-neo{background:linear-gradient(145deg,#2a313d,#1b222c);}
+                 .nm-item{--item-bg:#28303b;}
+                }
+
+                /* FIX: allow badge & pulse glow fully visible */
+                .enhanced-userbar .notif-btn-neo{
+                 position:relative;
+                 width:50px;height:50px;
+                 border-radius:20px;
+                 background:var(--neo-grad);
+                 border:1px solid rgba(120,150,190,.25);
+                 display:flex;align-items:center;justify-content:center;
+                 box-shadow:inset 0 2px 4px rgba(255,255,255,.6), var(--drop);
+                 transition:.4s cubic-bezier(.65,.05,.36,1);
+                 overflow:visible; /* changed from hidden */
+                }
+
+                .notif-btn-neo:before{
+                 content:"";
+                 position:absolute;inset:0;
+                 background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.9),transparent 70%);
+                 opacity:.6;mix-blend-mode:overlay;pointer-events:none;
+                }
+                .notif-btn-neo:hover{transform:translateY(-4px);box-shadow:inset 0 2px 6px rgba(255,255,255,.55),0 8px 26px -6px rgba(30,70,140,.45);}
+                .notif-btn-neo:active{transform:translateY(-1px) scale(.95);}
+                .notif-btn-neo img{filter:drop-shadow(0 4px 6px rgba(0,0,0,.35));border-radius:8px;}
+
+                .notif-ring{
+                 position:absolute;inset:0;border-radius:inherit;
+                 background:conic-gradient(from 0deg,var(--accent) 0 140deg,rgba(0,0,0,0) 140deg 360deg);
+                 mask:radial-gradient(circle at 50% 50%,transparent 55%,#000 57%);
+                 opacity:.55;animation:spinRing 6s linear infinite;
+                }
+                @keyframes spinRing{to{transform:rotate(360deg)}}
+
+                .notif-badge{
+                 position:absolute;top:2px;right:2px;
+                 background:var(--danger);color:#fff;font-size:.65rem;font-weight:600;
+                 padding:.35em .5em;line-height:1;border-radius:14px;
+                 border:2px solid var(--neo-bg);
+                 box-shadow:0 2px 6px -1px rgba(0,0,0,.35),0 0 0 4px rgba(220,53,69,.18);
+                 transform:none; /* removed translate that caused clipping */
+                 min-width:20px;
+                }
+                .notif-badge.pulse{animation:badgePulse 2.4s ease-in-out infinite;}
+                @keyframes badgePulse{
+                 0%{box-shadow:0 0 0 0 rgba(220,53,69,.55);}
+                 60%{box-shadow:0 0 0 10px rgba(220,53,69,0);}
+                 100%{box-shadow:0 0 0 0 rgba(220,53,69,0);}
+                }
+
+                .notif-menu{
+                 width:340px;
+                 background:var(--neo-bg);
+                 border-radius:20px;
+                 overflow:hidden;
+                 animation:popMenu .28s cubic-bezier(.4,.65,.25,1);
+                }
+                @keyframes popMenu{
+                 0%{transform:translateY(8px) scale(.96);opacity:0;}
+                 100%{transform:translateY(0) scale(1);opacity:1;}
+                }
+                .notif-menu .nm-header{
+                 background:linear-gradient(90deg,var(--accent) 0,var(--accent) 2px,transparent 2px),
+                            linear-gradient(145deg,rgba(27,116,228,.08),rgba(27,116,228,.02));
+                 padding:.75rem 1rem;position:sticky;top:0;z-index:2;
+                }
+                .btn-mark-read{
+                 margin-left:auto;background:var(--accent-grad);color:#fff;border:0;
+                 padding:.35rem .7rem;font-size:.7rem;border-radius:20px;
+                 letter-spacing:.5px;text-transform:uppercase;font-weight:600;
+                 box-shadow:0 2px 6px -2px rgba(0,0,0,.35);transition:.25s;
+                }
+                .btn-mark-read:hover{filter:brightness(1.08);}
+                .btn-mark-read:active{transform:translateY(1px);}
+
+                .nm-list{max-height:320px;overflow-y:auto;}
+                .nm-item{
+                 position:relative;display:flex;gap:.75rem;padding:.75rem 1rem;
+                 text-decoration:none;color:inherit;font-size:.83rem;line-height:1.25;
+                 background:linear-gradient(145deg,var(--neo-bg),var(--neo-bg)) padding-box,
+                            linear-gradient(145deg,rgba(27,116,228,.35),rgba(27,116,228,0)) border-box;
+                 border:1px solid rgba(120,150,190,.25);
+                 margin:.55rem .9rem;border-radius:14px;transition:.25s;
+                }
+                .nm-item.new{box-shadow:0 4px 14px -6px rgba(30,70,140,.35),inset 0 0 0 1px rgba(255,255,255,.4);}
+                .nm-item .dot{
+                 width:10px;height:10px;border-radius:50%;background:var(--accent);
+                 margin-top:4px;box-shadow:0 0 0 4px rgba(27,116,228,.18);animation:pingDot 1.8s ease-in-out infinite;flex-shrink:0;
+                }
+                @keyframes pingDot{
+                 0%{transform:scale(.6);opacity:.9;}
+                 60%{transform:scale(1);opacity:.35;}
+                 100%{transform:scale(.6);opacity:.9;}
+                }
+                .nm-item:hover{background:linear-gradient(145deg,#f4f8ff,#e3efff);transform:translateY(-3px);}
+                .nm-item:active{transform:translateY(-1px);}
+                .nm-item .time{font-size:.65rem;opacity:.65;margin-top:2px;}
+                .nm-footer{padding:.55rem;text-align:center;background:linear-gradient(145deg,rgba(27,116,228,.05),transparent);}
+                .view-all{
+                 font-size:.7rem;text-transform:uppercase;letter-spacing:.7px;font-weight:600;
+                 color:var(--accent);text-decoration:none;position:relative;
+                }
+                .view-all:after{
+                 content:"";position:absolute;left:50%;bottom:-2px;width:0;height:2px;
+                 background:var(--accent-grad);transition:.35s;transform:translateX(-50%);border-radius:2px;
+                }
+                .view-all:hover:after{width:82%;}
+
+                .avatar-trigger{
+                 position:relative;background:var(--neo-grad);border:1px solid rgba(120,150,190,.25);
+                 border-radius:22px;padding:2px;width:54px;height:54px;
+                 display:flex;align-items:center;justify-content:center;cursor:pointer;
+                 box-shadow:var(--drop),inset 0 2px 4px rgba(255,255,255,.55);
+                 transition:.45s cubic-bezier(.65,.05,.36,1);
+                }
+                .avatar-trigger:hover{transform:translateY(-4px);
+                 box-shadow:0 10px 28px -6px rgba(30,70,140,.45),inset 0 2px 6px rgba(255,255,255,.55);}
+                .avatar-trigger:active{transform:translateY(-1px) scale(.95);}
+                .avatar-img{width:46px;height:46px;border-radius:16px;object-fit:cover;display:block;filter:saturate(1.05);transition:.35s;}
+                .avatar-trigger:hover .avatar-img{filter:saturate(1.25) contrast(1.05);}
+                .avatar-ring{
+                 position:absolute;inset:0;border-radius:inherit;
+                 background:conic-gradient(from 0deg,var(--accent) 0 260deg,rgba(0,0,0,0) 260deg 360deg);
+                 mask:radial-gradient(circle at 50% 50%,transparent 58%,#000 60%);
+                 animation:avatarSpin 9s linear infinite;opacity:.55;
+                }
+                @keyframes avatarSpin{to{transform:rotate(360deg)}}
+
+                .user-dropdown .dropdown-menu{
+                 border-radius:22px;padding:0;background:var(--neo-bg);
+                 animation:usermenuPop .28s cubic-bezier(.4,.65,.25,1);
+                }
+                @keyframes usermenuPop{
+                 0%{transform:translateY(8px) scale(.95);opacity:0;}
+                 100%{transform:translateY(0) scale(1);opacity:1;}
+                }
+
+                /* FIX: avoid slice when hovering (remove translate causing edge clipping) */
+                .user-dropdown .dropdown-item{
+                 font-size:.85rem;padding:.6rem 1.05rem;border-radius:14px;
+                 margin:.15rem .6rem;font-weight:500;display:flex;align-items:center;
+                 gap:.55rem;position:relative;transition:.28s;background:transparent;
+                }
+                .user-dropdown .dropdown-item:hover{
+                 background:linear-gradient(145deg,#f0f6ff,#e3eefb);
+                 padding-left:1.25rem;
+                }
+                .user-dropdown .dropdown-item.text-danger:hover{background:rgba(220,53,69,.08);}
+                .icon-link i{width:18px;text-align:center;color:var(--accent);
+                 filter:drop-shadow(0 2px 4px rgba(27,116,228,.25));}
+                .status-dot{
+                 position:absolute;right:2px;bottom:2px;width:12px;height:12px;
+                 background:#31a24c;border:2px solid #fff;border-radius:50%;
+                 box-shadow:0 0 0 4px rgba(49,162,76,.25);
+                }
+                .hover-text:hover{text-decoration:underline;}
+                .dropdown-divider{opacity:.25;}
+
+                @media (max-width:992px){
+                 .notif-menu{width:300px;}
+                 .avatar-trigger{width:50px;height:50px;}
+                 .avatar-img{width:42px;height:42px;}
+                }
+
+                .nm-list::-webkit-scrollbar{width:8px;}
+                .nm-list::-webkit-scrollbar-track{background:transparent;}
+                .nm-list::-webkit-scrollbar-thumb{
+                 background:linear-gradient(var(--accent),#7db6ff);
+                 border-radius:20px;border:2px solid var(--neo-bg);
+                }
+                .nm-list:hover::-webkit-scrollbar-thumb{background:linear-gradient(#4796f5,#1b74e4);}
+                </style>
+
+                <style>
+                    body { background:#f0f2f5; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+                    .navbar-brand { font-weight:700; color:#1365ff !important; }
+                    .search-box { background:#f0f2f5; border:none; border-radius:20px; padding:6px 14px; width:230px; }
+                    .search-box:focus { outline:0; box-shadow:none; background:#e4e6eb; }
+                    .sidebar-sticky { position:sticky; top:70px; }
+                    .story-card { height:160px; border-radius:12px; background:#fff; border:1px solid #ddd; display:flex; align-items:center; justify-content:center; font-weight:600; color:#555; }
+                    .composer, .post-card { background:#fff; border-radius:8px; border:1px solid #ddd; }
+                    .composer textarea { resize:none; border:none; box-shadow:none; }
+                    .composer textarea:focus { outline:0; }
+                    .btn-primary { background:#1b74e4; border-color:#1b74e4; }
+                    .btn-primary:hover { background:#155ec0; }
+                    .avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; }
+                    .post-img { border-radius:8px; max-height:480px; object-fit:cover; width:100%; }
+                    .action-btn { background:transparent; border:none; padding:6px 8px; border-radius:6px; font-weight:500; color:#555; }
+                    .action-btn:hover { background:#f0f2f5; }
+                    .right-card { background:#fff; border:1px solid #ddd; border-radius:8px; }
+                    @media (max-width: 992px){
+                        .left-col, .right-col { display:none; }
+                        .search-box { width:140px; }
+                    }
+                </style>
+
+                <script>
+                (function(){
+                 const notifBtn=document.getElementById('notifBtn');
+                 const notifList=document.getElementById('notifList');
+                 const badge=document.querySelector('.notif-badge');
+                 const markBtn=document.getElementById('markAllNotif');
+                 function markAll(){
+                   notifList.querySelectorAll('.nm-item.new').forEach(i=>{
+                     i.classList.remove('new');
+                     i.querySelector('.dot')?.remove();
+                   });
+                   if(badge){
+                     badge.classList.remove('pulse');
+                     badge.textContent='0';
+                     badge.dataset.count='0';
+                     badge.style.background='#6c757d';
+                   }
+                 }
+                 markBtn?.addEventListener('click',e=>{
+                   e.preventDefault();
+                   markAll();
+                 });
+                 document.addEventListener('shown.bs.dropdown',e=>{
+                   if(e.target.contains(notifBtn)){
+                     [...notifList.children].forEach((el,i)=>{
+                       el.style.opacity=0;
+                       el.style.transform='translateY(6px)';
+                       setTimeout(()=>{
+                         el.style.transition='.4s cubic-bezier(.4,.65,.3,1)';
+                         el.style.opacity=1;
+                         el.style.transform='translateY(0)';
+                       }, 40*i+40);
+                     });
+                   }
+                 });
+                })();
+                </script>
+
+                <!-- Logout logic -->
+                <script>
+                (function(){
+                 const btn = document.getElementById('logoutBtn');
+                 if(!btn) return;
+                 btn.addEventListener('click', async (e)=>{
+                   e.preventDefault();
+                   if(btn.dataset.loading) return;
+                   btn.dataset.loading = '1';
+                   const original = btn.innerHTML;
+                   btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i><span> Đang đăng xuất...</span>';
+                   try{
+                     const res = await fetch('http://localhost:8080/api/auth/logout', {
+                       method: 'POST',
+                       headers: { 'Content-Type':'application/json' },
+                       body: '{}',
+                       credentials:'include'
+                     });
+                     if(!res.ok) throw new Error('Logout failed');
+                     try{ localStorage.removeItem('auth'); }catch(_){}
+                     window.location.href = '/views/login';
+                   }catch(err){
+                     btn.innerHTML = original;
+                     delete btn.dataset.loading;
+                     alert('Không thể đăng xuất. Vui lòng thử lại.');
+                   }
+                 });
+                })();
+                </script>
+                <style>
+                .spin{display:inline-block;animation:sp 1s linear infinite;}
+                @keyframes sp{to{transform:rotate(360deg)}}
+                </style>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+            </div>
+        </div>
+    <script>
+        document.querySelectorAll('.top-tabs .nav-link').forEach(a=>{
+            a.addEventListener('click',e=>{
+                e.preventDefault();
+                document.querySelectorAll('.top-tabs .nav-link').forEach(n=>n.classList.remove('active'));
+                a.classList.add('active');
+                // TODO: load content by data-page if needed
+            });
+        });
+    </script>
+    
+    </nav>
+    <!-- Navbar:END -->
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

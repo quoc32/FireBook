@@ -1,0 +1,20 @@
+### Upload file
+POST http://localhost:8080/api/media/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Cookie: JSESSIONID=0414ACA542F693A270B50EC8DA838EB3
+
+--WebAppBoundary
+Content-Disposition: form-data; name="files"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< ./test.jpg
+--WebAppBoundary
+Content-Disposition: form-data; name="files"; filename="FLAPPY_vd.mp4"
+Content-Type: video/mp4
+
+< ./FLAPPY_vd.mp4
+--WebAppBoundary--
+
+### Get media
+GET http://localhost:8080/api/media/files/3_d7248d87-7545-4336-95cc-232921f21e47_19.JPG
+Cookie: JSESSIONID=F28B1681642FF1388B96B96EC941499E

@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Friends</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <style>
+    body { background:#f8f9fa; }
+    .friend-card:hover { background:#f1f3f5; cursor:pointer; }
+    .avatar {
+      width:48px;height:48px;border-radius:50%;object-fit:cover;
+      background:#dee2e6;display:inline-flex;align-items:center;justify-content:center;
+      font-weight:600;color:#495057;
+    }
+    .status-dot {
+      width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;
+    }
+    .status-online { background:#28a745; }
+    .status-offline { background:#adb5bd; }
+    .truncate {
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      max-width:180px;display:inline-block;
+    }
+  </style>
+  <style>
+  /* ====== Enhanced Theme ====== */
+  :root {
+    --c-bg: #f5f7fb;
+    --c-bg-alt: #ffffff;
+    --c-grad: linear-gradient(135deg,#4f46e5 0%,#6366f1 50%,#8b5cf6 100%);
+    --c-grad-soft: linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%);
+    --c-text: #1f2937;
+    --c-text-soft: #6b7280;
+    --c-border: #e2e8f0;
+    --c-accent: #6366f1;
+    --c-accent-rgb: 99,102,241;
+    --c-danger: #dc3545;
+    --radius-sm: .4rem;
+    --radius: .9rem;
+    --radius-lg: 1.6rem;
+    --shadow-sm: 0 4px 10px -2px rgba(0,0,0,.06),0 2px 4px -2px rgba(0,0,0,.05);
+    --shadow: 0 8px 26px -4px rgba(0,0,0,.07),0 4px 12px -4px rgba(0,0,0,.05);
+    --blur: saturate(180%) blur(14px);
+    --transition: .25s cubic-bezier(.4,0,.2,1);
+  }
+  .dark-theme {
+    --c-bg:#101623;
+    --c-bg-alt:#1b2433;
+    --c-grad:linear-gradient(135deg,#312e81,#4338ca,#6d28d9);
+    --c-grad-soft:linear-gradient(135deg,#232c3d,#1b2534);
+    --c-text:#f1f5f9;
+    --c-text-soft:#94a3b8;
+    --c-border:#2c3a52;
+    --c-accent:#818cf8;
+    --c-accent-rgb:129,140,248;
+    --c-danger:#f87171;
+    --shadow-sm:0 4px 10px -2px rgba(0,0,0,.6),0 2px 4px -2px rgba(0,0,0,.5);
+    --shadow:0 8px 26px -4px rgba(0,0,0,.55),0 4px 14px -6px rgba(0,0,0,.55);
+  }
+  html,body {
+    background: var(--c-grad-soft);
+    color: var(--c-text);
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content:"";
+    position:fixed;
+    inset:0;
+    background:
+      radial-gradient(circle at 12% 18%,rgba(var(--c-accent-rgb),.25),transparent 60%),
+      radial-gradient(circle at 88% 82%,rgba(var(--c-accent-rgb),.18),transparent 60%);
+    pointer-events:none;
+    opacity:.65;
+    mix-blend-mode:color-dodge;
+  }
+  .card {
+    border:1px solid var(--c-border);
+    border-radius:var(--radius);
+    overflow:hidden;
+    background:var(--c-bg-alt);
+    box-shadow:var(--shadow-sm);
+    transition:var(--transition);
+    position:relative;
+  }
+  /* .card:hover { box-shadow:var(--shadow); transform:translateY(-2px); } */
+  .card-header {
+    background:linear-gradient(90deg,rgba(var(--c-accent-rgb),.07),transparent);
+    border-bottom:1px solid var(--c-border);
+    font-weight:600;
+    letter-spacing:.3px;
+  }
+  .list-group-item {
+    background:transparent;
+    transition:var(--transition);
+    position:relative;
+    border-color:var(--c-border);
+  }
+  .friend-card::after,
+  .list-group-item:not(.active)::after {
+    content:"";
+    position:absolute;
+    inset:0;
+    opacity:0;
+    background:linear-gradient(90deg,rgba(var(--c-accent-rgb),.08),transparent 60%);
+    transition:var(--transition);
+    pointer-events:none;
+  }
+  /* Decorative separator stripe for list-group-item */
+  .list-group-flush .list-group-item {
+    border-top-color: transparent;
+  }
+  .list-group-flush .list-group-item::before {
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(var(--c-accent-rgb), .15) 15%,
+      rgba(var(--c-accent-rgb), .35) 50%,
+      rgba(var(--c-accent-rgb), .15) 85%,
+      transparent 100%
+    );
+    opacity: .6;
+    pointer-events: none;
+  }
+  .list-group-flush .list-group-item:last-child::before { display: none; }
+  .friend-card:hover::after,
+  .list-group-item:hover::after { opacity:1; }
+  .friend-card:hover {
+    background:rgba(var(--c-accent-rgb),.04)!important;
+    /* transform:translateY(-1px); */
+  }
+  .avatar {
+    box-shadow:0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(var(--c-accent-rgb),.15);
+    background:linear-gradient(135deg,#eef2ff,#e0e7ff);
+    font-size:.9rem;
+  }
+  .dark-theme .avatar { background:linear-gradient(135deg,#232c3d,#334155); }
+  .badge {
+    font-weight:500;
+    padding:.45em .65em;
+    border-radius:var(--radius-sm);
+    letter-spacing:.5px;
+  }
+  input.form-control, .form-control {
+    border-radius:var(--radius-sm);
+    border:1px solid var(--c-border);
+    background:var(--c-bg-alt);
+    transition:var(--transition);
+  }
+  input.form-control:focus {
+    border-color:var(--c-accent);
+    box-shadow:0 0 0 .18rem rgba(var(--c-accent-rgb),.25);
+    background:var(--c-bg-alt);
+  }
+  .btn {
+    border-radius:var(--radius-sm);
+    font-weight:500;
+    letter-spacing:.3px;
+    position:relative;
+    overflow:hidden;
+    transition:var(--transition);
+  }
+  .btn-outline-secondary:hover {
+    background:var(--c-accent);
+    color:#fff;
+    border-color:var(--c-accent);
+  }
+  .btn-primary, .btn-success, .btn-warning, .btn-info {
+    box-shadow:0 4px 10px -2px rgba(var(--c-accent-rgb),.45);
+  }
+  .btn-primary:hover {
+    filter:brightness(1.05);
+    /* transform:translateY(-1px); */
+  }
+  .dropdown-menu {
+    border-radius:var(--radius-sm);
+    border:1px solid var(--c-border);
+    background:var(--c-bg-alt);
+    box-shadow:var(--shadow);
+  }
+  .dropdown-item {
+    font-size:.875rem;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+    transition:var(--transition);
+  }
+  .dropdown-item:hover {
+    background:rgba(var(--c-accent-rgb),.08);
+    color:var(--c-accent);
+  }
+  .toast {
+    backdrop-filter:var(--blur);
+    background:rgba(var(--c-accent-rgb),.92)!important;
+    box-shadow:0 8px 24px -4px rgba(var(--c-accent-rgb),.4);
+    border-radius:14px;
+  }
+  .toast-body { font-weight:500; letter-spacing:.4px; }
+  .modal-content {
+    border-radius:1.2rem;
+    border:1px solid var(--c-border);
+    box-shadow:var(--shadow);
+    background:var(--c-bg-alt);
+  }
+  .modal-header {
+    background:linear-gradient(120deg,rgba(var(--c-accent-rgb),.09),transparent);
+    border-bottom:1px solid var(--c-border);
+  }
+  .form-text { font-size:.7rem; letter-spacing:.4px; }
+  ::-webkit-scrollbar { width:10px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb {
+    background:linear-gradient(var(--c-accent),#4f46e5);
+    border:3px solid var(--c-bg);
+    border-radius:20px;
+  }
+  .dark-theme ::-webkit-scrollbar-thumb { border-color:var(--c-bg-alt); }
+  .search-elevated input {
+    box-shadow:0 4px 18px -6px rgba(var(--c-accent-rgb),.35);
+  }
+  .glow-focus:focus {
+    animation:glow .9s ease;
+  }
+  @keyframes glow {
+    0% { box-shadow:0 0 0 0 rgba(var(--c-accent-rgb),.55); }
+    100% { box-shadow:0 0 0 .35rem rgba(var(--c-accent-rgb),0); }
+  }
+  /* Skeleton pulse utility (optional future use) */
+  .skeleton {
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(110deg, #e2e8f0 8%, #f1f5f9 18%, #e2e8f0 33%);
+    background-size:200% 100%;
+    animation:skeleton 1.2s linear infinite;
+    border-radius:8px;
+  }
+  @keyframes skeleton {
+    to { background-position:-200% 0; }
+  }
+  .dark-theme .skeleton {
+    background:linear-gradient(110deg,#2a3546 8%,#354255 18%,#2a3546 33%);
+  }
+  .fade-in {
+    animation:fadeIn .5s var(--transition);
+  }
+  /* @keyframes fadeIn { from {opacity:0; transform:translateY(6px);} to {opacity:1; transform:none;} } */
+  /* Tag for subtle section titles */
+  .section-tag {
+    display:inline-block;
+    padding:.35rem .75rem;
+    font-size:.65rem;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    border-radius:2rem;
+    background:rgba(var(--c-accent-rgb),.1);
+    color:var(--c-accent);
+    backdrop-filter:blur(10px);
+    margin-bottom:.75rem;
+  }
+  .dark-theme .section-tag { background:rgba(var(--c-accent-rgb),.18); }
+  /* Friend hover subtle lift */
+  .friend-card { transition:var(--transition); }
+  .friend-card:hover .fw-semibold {
+    color:var(--c-accent);
+  }
+  .link-clean {
+    color:inherit;
+    text-decoration:none;
+  }
+  .link-clean:hover {
+    color:var(--c-accent);
+    text-decoration:underline;
+  }
+  /* Mini badge pulse for counts */
+  .badge[data-pulse="true"] {
+    position:relative;
+  }
+  .badge[data-pulse="true"]::after {
+    content:"";
+    position:absolute;
+    inset:-4px;
+    border:2px solid rgba(var(--c-accent-rgb),.4);
+    border-radius:inherit;
+    animation:pulseBadge 1.8s infinite;
+  }
+  /* @keyframes pulseBadge {
+    0% { opacity:.8; transform:scale(.85); }
+    70% { opacity:0; transform:scale(1.35); }
+    100% { opacity:0; transform:scale(1.35); }
+  } */
+  /* Responsive refinements */
+  @media (max-width: 992px) {
+    .card { box-shadow:var(--shadow-sm); }
+    .friend-card { padding-top:.85rem; padding-bottom:.85rem; }
+    .avatar { width:44px; height:44px; }
+  }
+  </style>
+</head>
+<body>
+  <!-- Nhúng fragment navbar -->
+  <div th:replace="fragments/navbar :: navbar"></div>
+
+  <br>
+
+  <!-- Main:BEGIN -->
+  <main class="container">
+    <!-- Main__ -->
+    <div class="row g-4">
+
+      <!-- Friends List:BEGIN -->
+      <div class="col-lg-7">
+
+        <div class="card shadow-sm">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+              <h6 class="mb-0">Your Friends</h6>
+              <span class="badge bg-primary" id="friendsCount">0</span>
+            </div>
+            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addFriendModal">
+              + Add
+            </button>
+          </div>
+
+          <ul class="list-group list-group-flush" id="friendsList" style="min-height:200px; max-height:400px; overflow-y:auto;">
+        <!-- Friends injected here -->
+          </ul>
+
+          <div class="card-body text-center small text-muted" id="friendsEmptyState" style="display:none;">
+            No friends yet. Add someone to get started.
+          </div>
+        </div>
+           
+        <!-- Add Friend Modal:BEGIN -->
+        <div class="modal fade" id="addFriendModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content" id="addFriendForm">
+
+              <div class="modal-header">
+          <h5 class="modal-title">Thêm bạn bè</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+              </div>
+
+              <div class="modal-body">
+          <label class="form-label">Email người dùng</label>
+          <input class="form-control" id="addFriendInput" required autocomplete="off" placeholder="nhapemail@example.com" />
+          <div class="form-text">Nhập chính xác email của người bạn muốn kết bạn.</div>
+          <div class="alert alert-danger py-2 px-3 mt-3 d-none" id="addFriendError"></div>
+          <div class="alert alert-success py-2 px-3 mt-3 d-none" id="addFriendSuccess"></div>
+              </div>
+
+              <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">
+            <span class="spinner-border spinner-border-sm me-2 d-none" id="addFriendSpinner"></span>
+            Gửi lời mời
+          </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+
+        <script>
+          // Ghi đè handler mặc định phía dưới bằng cách chặn propagation
+          (function(){
+            const form = document.getElementById('addFriendForm');
+            const input = document.getElementById('addFriendInput');
+            const errEl = document.getElementById('addFriendError');
+            const okEl = document.getElementById('addFriendSuccess');
+            const spinner = document.getElementById('addFriendSpinner');
+
+            function setState({loading=false,error='',success=''}){
+              if (loading) spinner.classList.remove('d-none'); else spinner.classList.add('d-none');
+              if (error){
+                errEl.textContent = error;
+                errEl.classList.remove('d-none');
+              } else errEl.classList.add('d-none');
+              if (success){
+                okEl.textContent = success;
+                okEl.classList.remove('d-none');
+              } else okEl.classList.add('d-none');
+            }
+
+            form.addEventListener('submit', async (e)=>{
+              e.preventDefault();
+              e.stopImmediatePropagation(); // Ngăn listener cũ (POST /api/friends/requests)
+              const email = input.value.trim();
+              if(!email){
+                setState({error:'Vui lòng nhập email.'});
+                return;
+              }
+              setState({loading:true});
+              try {
+                const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                const senderId = auth?.user_id;
+                if(!senderId){
+                  throw new Error('Không xác định được người dùng hiện tại.');
+                }
+
+                // 1. Tìm user theo email
+                const findRes = await fetch(`/api/users/find/by-email?email=${encodeURIComponent(email)}`, {
+                  method:'GET',
+                  credentials:'include'
+                });
+                if(!findRes.ok){
+                  throw new Error('Không tìm thấy email này.');
+                }
+                const userData = await findRes.json();
+                const receiverId = userData?.id;
+                if(!receiverId){
+                  throw new Error('Phản hồi không hợp lệ.');
+                }
+                if(Number(receiverId) === Number(senderId)){
+                  throw new Error('Không thể tự kết bạn với chính mình.');
+                }
+
+                // 2. Gửi request kết bạn
+                const reqRes = await fetch('/api/friends/request', {
+                  method:'POST',
+                  credentials:'include',
+                  headers:{'Content-Type':'application/json'},
+                  body: JSON.stringify({
+                    sender_id: Number(senderId),
+                    receiver_id: Number(receiverId)
+                  })
+                });
+                if(!reqRes.ok){
+                  let msg = 'Gửi lời mời thất bại.';
+                  try { const j = await reqRes.json(); if(j.message) msg = j.message; } catch {}
+                  throw new Error(msg);
+                }
+
+                setState({success:'Đã gửi lời mời kết bạn.'});
+                input.value = '';
+                setTimeout(()=>{
+                  setState({});
+                  const modal = bootstrap.Modal.getInstance(document.getElementById('addFriendModal'));
+                  modal && modal.hide();
+                  document.dispatchEvent(new Event('friends:refresh'));
+                }, 1000);
+
+              } catch(err){
+              setState({error: err.message || 'Lỗi không xác định.'});
+              } finally {
+                setState({
+                  loading:false,
+                  error: !errEl.classList.contains('d-none') ? errEl.textContent : '',
+                  success: !okEl.classList.contains('d-none') ? okEl.textContent : ''
+                });
+              }
+            }, {capture:true}); // capture để đảm bảo chạy trước nếu có
+
+          })();
+        </script>
+        <!-- Add Friend Modal:END -->
+
+        <script>
+          (function () {
+            const friendsListEl = document.getElementById('friendsList');
+            const friendsCountEl = document.getElementById('friendsCount');
+            const friendsEmptyEl = document.getElementById('friendsEmptyState');
+
+            const addFriendForm = document.getElementById('addFriendForm');
+            const addFriendInput = document.getElementById('addFriendInput');
+            const addFriendError = document.getElementById('addFriendError');
+            const addFriendSuccess = document.getElementById('addFriendSuccess');
+            const addFriendSpinner = document.getElementById('addFriendSpinner');
+
+            const removeModalEl = document.getElementById('removeFriendModal');
+            const confirmRemoveBtn = document.getElementById('confirmRemoveBtn');
+            const removeFriendSpinner = document.getElementById('removeFriendSpinner');
+            const removeFriendIdInput = document.getElementById('removeFriendId');
+
+            function setAddFriendState({ loading = false, error = '', success = '' }) {
+              if (loading) addFriendSpinner.classList.remove('d-none'); else addFriendSpinner.classList.add('d-none');
+              if (error) {
+                addFriendError.textContent = error;
+              } else addFriendSuccess.classList.add('d-none');
+            }
+
+            // Khi trang tải, lấy danh sách bạn bè, gọi renderFriends với array bạn bè
+            async function fetchFriends() {
+              try {
+                const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                const user_id = auth?.user_id;
+                const res = await fetch(`/api/friends/${user_id}`, { credentials: 'include' });
+                if (!res.ok) throw new Error('Failed to load friends');
+                const data = await res.json();
+                let friendsArr = Array.isArray(data) ? data : (data.friends || []);
+                // Exclude entries whose status is pending (case-insensitive) or refused
+                friendsArr = friendsArr.filter(f => (f.status || f.friend_status || '').toLowerCase() !== 'pending');
+                friendsArr = friendsArr.filter(f => (f.status || f.friend_status || '').toLowerCase() !== 'refused');
+                renderFriends(friendsArr);
+              } catch (e) {
+                friendsListEl.innerHTML = '<li class="list-group-item text-danger small">Error loading friends.</li>';
+                friendsCountEl.textContent = '0';
+              }
+            }
+
+            function renderFriends(friends) {
+              friendsListEl.innerHTML = '';
+              if (!friends.length) {
+                friendsEmptyEl.style.display = '';
+                friendsCountEl.textContent = '0';
+                return;
+              }
+              friendsEmptyEl.style.display = 'none';
+              friendsCountEl.textContent = friends.length;
+              const frag = document.createDocumentFragment();
+
+              friends.forEach(f => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item friend-card d-flex align-items-center justify-content-between';
+                li.dataset.id = f.friend_info.id;
+                const fullName = (f.friend_info?.full_name || f.username || 'Unknown').trim();
+                const email = f.friend_info?.email || 'Unknown';
+                const avatarUrl = f.friend_info?.avatar_url || f.friend_info?.avatarUrl;
+                const initials = fullName.charAt(0).toUpperCase();
+                const avatarHtml = avatarUrl
+                  ? `<img src="${escapeHtml(avatarUrl)}" class="avatar" alt="${escapeHtml(fullName)}">`
+                  : `<div class="avatar">${escapeHtml(initials)}</div>`;
+                li.innerHTML = `
+                  <div class="d-flex align-items-center gap-3">
+                    ${avatarHtml}
+                    <div>
+                    <div class="fw-semibold">${escapeHtml(fullName)}</div>
+                    <div class="small text-muted truncate">${escapeHtml(email)}</div>
+                    </div>
+                  </div>
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                    Tùy chọn
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item view-profile-btn" href="/views/user/${escapeHtml(f.friend_info.id)}" data-id="${escapeHtml(f.id)}">Xem trang cá nhân</a></li>
+                    <li><a class="dropdown-item remove-friend-btn text-danger" href="#" onclick="handleUnfriend(${escapeHtml(f.friend_info.id)})">Hủy kết bạn</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item block-friend-btn text-warning" href="#" data-id="${escapeHtml(f.id)}">Block</a></li>
+                    </ul>
+                  </div>
+                `;
+                frag.appendChild(li);
+              });
+              
+              friendsListEl.appendChild(frag);
+            }
+
+            function escapeHtml(str) {
+              return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+            }
+
+            addFriendForm.addEventListener('submit', async (e) => {
+              e.preventDefault();
+              const value = addFriendInput.value.trim();
+              if (!value) return setAddFriendState({ error: 'Value required.' });
+              setAddFriendState({ loading: true });
+              try {
+                const res = await fetch('/api/friends/requests', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({ identifier: value })
+                });
+                if (!res.ok) {
+              let msg = 'Request failed';
+              try { const j = await res.json(); if (j.message) msg = j.message; } catch {}
+              throw new Error(msg);
+                }
+                setAddFriendState({ success: 'Request sent.' });
+                addFriendInput.value = '';
+                setTimeout(() => {
+              setAddFriendState({});
+              const modal = bootstrap.Modal.getInstance(document.getElementById('addFriendModal'));
+              modal && modal.hide();
+                }, 1000);
+              } catch (err) {
+                setAddFriendState({ error: err.message || 'Error.' });
+              } finally {
+                setAddFriendState({ loading: false, error: addFriendError.textContent, success: addFriendSuccess.textContent });
+              }
+            });
+
+            friendsListEl.addEventListener('click', (e) => {
+              const btn = e.target.closest('.remove-friend-btn');
+              if (!btn) return;
+              const li = btn.closest('li');
+              const id = li?.dataset.id;
+              if (!id) return;
+              const name = li.querySelector('.fw-semibold')?.textContent || '';
+              const modalEl = document.getElementById('removeFriendModal');
+              if (!modalEl) return;
+              modalEl.querySelector('#removeFriendId').value = id;
+              modalEl.querySelector('#removeFriendName').textContent = name;
+              new bootstrap.Modal(modalEl).show();
+            });
+
+            document.addEventListener('friends:refresh', fetchFriends);
+
+            fetchFriends();
+          })();
+        </script>
+
+      </div>
+      <!-- Friends List:END -->
+
+      <!-- Requests / Actions -->
+      <div class="col-lg-5">
+        <!-- Incoming requests:BEGIN -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h6 class="mb-0">Incoming Requests (Pending)</h6>
+            <span class="badge bg-warning text-dark" id="incomingCount">0</span>
+          </div>
+          <ul class="list-group list-group-flush" id="incomingList"></ul>
+          <div class="card-body text-center small text-muted" id="incomingEmpty" style="display:none;">
+            No incoming requests.
+          </div>
+        </div>
+
+        <script>
+          (function () {
+            const incomingListEl = document.getElementById('incomingList');
+            const incomingCountEl = document.getElementById('incomingCount');
+            const incomingEmptyEl = document.getElementById('incomingEmpty');
+
+            function escapeHtml(str) {
+              return String(str || '')
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#39;');
+            }
+
+            async function fetchIncoming() {
+              try {
+                const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                const user_id = auth?.user_id;
+                if (!user_id) return;
+                // Reuse friends endpoint then filter pending (status = pending)
+                const res = await fetch(`/api/friends/${user_id}`, { credentials: 'include' });
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                let arr = Array.isArray(data) ? data : (data.friends || []);
+                arr = arr.filter(f => {
+                  const status = (f.status || f.friend_status || '').toLowerCase();
+                  console.log(f.sender_id, user_id, status);
+                  return status === 'pending' && Number(f.sender_id || f.senderId) !== Number(user_id);
+                });
+                renderIncoming(arr);
+              } catch {
+                incomingListEl.innerHTML = '<li class="list-group-item text-danger small">Error loading.</li>';
+                incomingCountEl.textContent = '0';
+              }
+            }
+
+            function renderIncoming(requests) {
+              incomingListEl.innerHTML = '';
+              if (!requests.length) {
+                incomingEmptyEl.style.display = '';
+                incomingCountEl.textContent = '0';
+                return;
+              }
+              incomingEmptyEl.style.display = 'none';
+              incomingCountEl.textContent = requests.length;
+              const frag = document.createDocumentFragment();
+              requests.forEach(r => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex align-items-center justify-content-between';
+                li.dataset.id = r.sender_id || r.id;
+                const fullName = (r.friend_info?.full_name || r.username || 'Unknown').trim();
+                const email = r.friend_info?.email || '';
+                const avatarUrl = r.friend_info?.avatar_url || r.friend_info?.avatarUrl;
+                const initials = fullName.charAt(0).toUpperCase();
+                const avatarHtml = avatarUrl
+                  ? `<img src="${escapeHtml(avatarUrl)}" class="avatar" alt="${escapeHtml(fullName)}">`
+                  : `<div class="avatar">${escapeHtml(initials)}</div>`;
+                li.innerHTML = `
+                  <div class="d-flex align-items-center gap-3">
+                    ${avatarHtml}
+                    <div>
+                      <div class="fw-semibold">${escapeHtml(fullName)}</div>
+                      <div class="small text-muted truncate">${escapeHtml(email)}</div>
+                    </div>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-primary accept-btn">Accept</button>
+                    <button class="btn btn-sm btn-outline-danger decline-btn">Decline</button>
+                  </div>
+                `;
+          frag.appendChild(li);
+              });
+              incomingListEl.appendChild(frag);
+            }
+
+            async function handleAction(id, action) {
+              if (!id) return;
+              const li = document.querySelector(`#incomingList li[data-id="${id}"]`);
+              const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+              const currentUserId = auth?.user_id;
+              // Try to read explicit data attributes if they exist; fallback assumptions
+              const sender_id = currentUserId;     // backend should really provide sender_id
+              const receiver_id = li?.dataset.receiverId || id; // backend should really provide receiver_id
+              const url = action === 'accept' ? '/api/friends/accept' : '/api/friends/refuse';
+              try {
+                const res = await fetch(url, {
+                  method: 'PUT',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                  sender_id: Number(sender_id),
+                  receiver_id: Number(receiver_id)
+                  })
+                });
+                if (!res.ok) throw new Error('Failed');
+                fetchIncoming();
+                document.dispatchEvent(new Event('friends:refresh'));
+                showTempToast(`${action === 'accept' ? 'Accepted' : 'Declined'} successfully`, 'success');
+              } catch (e) {
+                showTempToast(`${action === 'accept' ? 'Accept' : 'Decline'} failed`, 'danger');
+              }
+            }
+
+            function showTempToast(msg, type='info') {
+              const container = document.getElementById('toastContainer');
+              if (!container) return;
+              const id = 't' + Date.now();
+              const el = document.createElement('div');
+              el.className = `toast align-items-center text-bg-${type} border-0 show mb-2`;
+              el.role = 'alert';
+              el.innerHTML = `
+                <div class="d-flex">
+                  <div class="toast-body">${escapeHtml(msg)}</div>
+                  <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+              `;
+              container.appendChild(el);
+              setTimeout(()=> el.remove(), 4000);
+            }
+
+            incomingListEl.addEventListener('click', (e) => {
+              const li = e.target.closest('li');
+              if (!li) return;
+              const id = li.dataset.id;
+              if (e.target.closest('.accept-btn')) {
+                disableRow(li, true);
+                handleAction(id, 'accept').finally(()=> disableRow(li, false));
+              } else if (e.target.closest('.decline-btn')) {
+                disableRow(li, true);
+                handleAction(id, 'decline').finally(()=> disableRow(li, false));
+              }
+            });
+
+            function disableRow(li, state) {
+              li.querySelectorAll('button').forEach(b => {
+                b.disabled = state;
+                if (state) b.dataset.originalText = b.textContent;
+                b.textContent = state ? '...' : b.dataset.originalText || b.textContent;
+              });
+            }
+
+            document.addEventListener('friends:refresh', fetchIncoming);
+            fetchIncoming();
+          })();
+        </script>
+        <!-- Incoming requests:END -->
+
+        <!-- Outgoing requests:BEGIN -->
+        <div class="card shadow-sm">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h6 class="mb-0">Outgoing Requests (Pending)</h6>
+            <span class="badge bg-info text-dark" id="outgoingCount">0</span>
+          </div>
+          <ul class="list-group list-group-flush" id="outgoingList"></ul>
+          <div class="card-body text-center small text-muted" id="outgoingEmpty" style="display:none;">
+            No pending outgoing requests.
+          </div>
+        </div>
+
+        <script>
+          (function(){
+            const outgoingListEl = document.getElementById('outgoingList');
+            const outgoingCountEl = document.getElementById('outgoingCount');
+            const outgoingEmptyEl = document.getElementById('outgoingEmpty');
+
+            function escapeHtml(str){
+              return String(str||'')
+          .replace(/&/g,'&amp;')
+          .replace(/</g,'&lt;')
+          .replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;')
+          .replace(/'/g,'&#39;');
+            }
+
+            function showTempToast(msg,type='info'){
+              const container = document.getElementById('toastContainer');
+              if(!container) return;
+              const el = document.createElement('div');
+              el.className = `toast align-items-center text-bg-${type} border-0 show mb-2`;
+              el.innerHTML = `
+                <div class="d-flex">
+                  <div class="toast-body">${escapeHtml(msg)}</div>
+                  <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>`;
+              container.appendChild(el);
+              setTimeout(()=> el.remove(),4000);
+            }
+
+            async function fetchOutgoing(){
+              try{
+          const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+          const user_id = auth?.user_id;
+          if(!user_id){
+            renderOutgoing([]);
+            return;
+          }
+          const res = await fetch(`/api/friends/${user_id}`, { credentials:'include' });
+          if(!res.ok) throw new Error();
+          const data = await res.json();
+          let arr = Array.isArray(data) ? data : (data.friends||[]);
+          // Pending where current user is sender
+          arr = arr.filter(r => {
+            const status = (r.status || r.friend_status || '').toLowerCase();
+            return status === 'pending' && Number(r.sender_id || r.senderId) === Number(user_id);
+          });
+          renderOutgoing(arr);
+              }catch{
+          outgoingListEl.innerHTML = '<li class="list-group-item text-danger small">Error loading.</li>';
+          outgoingEmptyEl.style.display='none';
+          outgoingCountEl.textContent='0';
+              }
+            }
+
+            function renderOutgoing(list){
+              outgoingListEl.innerHTML='';
+              if(!list.length){
+                outgoingEmptyEl.style.display='';
+                outgoingCountEl.textContent='0';
+                return;
+              }
+              outgoingEmptyEl.style.display='none';
+              outgoingCountEl.textContent = list.length;
+              const frag = document.createDocumentFragment();
+              list.forEach(r=>{
+                const li = document.createElement('li');
+                li.className='list-group-item d-flex align-items-center justify-content-between';
+                // Receiver (the person we sent to)
+                const fullName = (r.friend_info?.full_name || r.username || 'Unknown').trim();
+                const email = r.friend_info?.email || '';
+                const avatarUrl = r.friend_info?.avatar_url || r.friend_info?.avatarUrl;
+                const initials = fullName.charAt(0).toUpperCase();
+                li.dataset.receiverId = r.receiver_id || r.receiverId || r.friend_info?.id || r.id;
+                const avatarHtml = avatarUrl
+                  ? `<img src="${escapeHtml(avatarUrl)}" class="avatar" alt="${escapeHtml(fullName)}">`
+                  : `<div class="avatar">${escapeHtml(initials)}</div>`;
+                li.innerHTML = `
+                  <div class="d-flex align-items-center gap-3">
+                    ${avatarHtml}
+                    <div>
+                      <div class="fw-semibold">${escapeHtml(fullName)}</div>
+                      <div class="small text-muted truncate">${escapeHtml(email)}</div>
+                    </div>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-danger cancel-btn">Hủy</button>
+                  </div>
+                `;
+                frag.appendChild(li);
+              });
+              outgoingListEl.appendChild(frag);
+            }
+
+            async function cancelRequest(li){
+              if(!li) return;
+              const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+              const sender_id = auth?.user_id;
+              const receiver_id = li.dataset.receiverId;
+              if(!sender_id || !receiver_id) return;
+                const btn = li.querySelector('.cancel-btn');
+                btn.disabled = true;
+                const original = btn.textContent;
+                btn.textContent='...';
+              try{
+                // Using cancel_request endpoint
+                const res = await fetch('/api/friends/cancel_request', {
+                  method:'DELETE',
+                  credentials:'include',
+                  headers:{'Content-Type':'application/json'},
+                  body: JSON.stringify({
+                    sender_id: Number(sender_id),
+                    receiver_id: Number(receiver_id)
+                  })
+                });
+                if(!res.ok) throw new Error('Cancel failed');
+                showTempToast('Đã hủy lời mời','success');
+                fetchOutgoing();
+                document.dispatchEvent(new Event('friends:refresh'));
+              }catch(e){
+                showTempToast(e.message || 'Hủy thất bại','danger');
+                btn.disabled=false;
+                btn.textContent=original;
+              }
+            }
+
+            outgoingListEl.addEventListener('click', e=>{
+              const btn = e.target.closest('.cancel-btn');
+              if(!btn) return;
+              const li = btn.closest('li');
+              cancelRequest(li);
+            });
+
+            document.addEventListener('friends:refresh', fetchOutgoing);
+            fetchOutgoing();
+          })();
+        </script>
+        <!-- Outgoing requests:END -->
+
+      </div>
+
+    </div>
+
+    <!-- Suggested Friends:BEGIN -->
+    <div class="row mt-5">
+      <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+          <h6 class="mb-0">Suggestive friends</h6>
+          <span class="badge bg-secondary" id="suggestionsCount">0</span>
+        </div>
+        <div class="d-flex gap-2">
+          <input id="suggestionsSearch" class="form-control form-control-sm" style="max-width:180px" placeholder="Tìm...">
+          <button class="btn btn-sm btn-outline-primary" id="refreshSuggestionsBtn">Refresh</button>
+        </div>
+        </div>
+        <ul class="list-group list-group-flush" id="suggestionsList"></ul>
+        <div class="card-body text-center small text-muted" id="suggestionsEmpty" style="display:none;">
+        No suggestions yet.
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <script>
+      (function(){
+        const listEl = document.getElementById('suggestionsList');
+        const emptyEl = document.getElementById('suggestionsEmpty');
+        const countEl = document.getElementById('suggestionsCount');
+        const refreshBtn = document.getElementById('refreshSuggestionsBtn');
+        const searchInput = document.getElementById('suggestionsSearch');
+
+        let rawSuggestions = [];
+
+        function escapeHtml(str){
+          return String(str||'')
+          .replace(/&/g,'&amp;')
+          .replace(/</g,'&lt;')
+          .replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;')
+          .replace(/'/g,'&#39;');
+        }
+
+        function showToast(msg,type='info'){
+          const container = document.getElementById('toastContainer');
+          if(!container) return;
+          const el = document.createElement('div');
+          el.className = `toast align-items-center text-bg-${type} border-0 show mb-2`;
+          el.innerHTML = `
+          <div class="d-flex">
+            <div class="toast-body">${escapeHtml(msg)}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>`;
+          container.appendChild(el);
+          setTimeout(()=> el.remove(),4000);
+        }
+
+        async function fetchSuggestions(){
+          toggleLoading(true);
+          try {
+            const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+            const user_id = auth?.user_id;
+            if(!user_id){
+              render([]);
+              return;
+            }
+            // New backend endpoint: /api/friends/suggestions/{userId}
+            const res = await fetch(`/api/friends/suggestions/${encodeURIComponent(user_id)}`, {
+              credentials:'include'
+            });
+            if(!res.ok) throw new Error('Fetch failed');
+            const data = await res.json();
+            rawSuggestions = Array.isArray(data) ? data : [];
+            // (Assume backend already excludes existing friends / pending)
+            applyFilter();
+          } catch {
+            listEl.innerHTML = '<li class="list-group-item text-danger small">Lỗi tải gợi ý.</li>';
+            emptyEl.style.display='none';
+            countEl.textContent = '0';
+          } finally {
+            toggleLoading(false);
+          }
+        }
+
+        function applyFilter(){
+          const q = searchInput.value.trim().toLowerCase();
+          const filtered = !q ? rawSuggestions :
+          rawSuggestions.filter(s => {
+            const name = (s.full_name || s.fullName || '').toLowerCase();
+            const email = (s.email||'').toLowerCase();
+            return name.includes(q) || email.includes(q);
+          });
+          render(filtered);
+        }
+
+        function render(arr){
+          listEl.innerHTML = '';
+          if(!arr.length){
+            emptyEl.style.display = '';
+            countEl.textContent = '0';
+            return;
+          }
+          emptyEl.style.display = 'none';
+          countEl.textContent = arr.length;
+          const frag = document.createDocumentFragment();
+          arr.forEach(s => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex align-items-center justify-content-between';
+            li.dataset.userId = s.id;
+            const fullName = (s.full_name || s.fullName || 'Không rõ').trim();
+            const email = s.email || '';
+            const avatarUrl = s.avatar_url || s.avatarUrl;
+            const initials = fullName.charAt(0).toUpperCase();
+            const avatarHtml = avatarUrl
+              ? `<img src="${escapeHtml(avatarUrl)}" class="avatar" alt="${escapeHtml(fullName)}">`
+              : `<div class="avatar">${escapeHtml(initials)}</div>`;
+            li.innerHTML = `
+              <div class="d-flex align-items-center gap-3">
+              ${avatarHtml}
+              <div>
+                <div class="fw-semibold">${escapeHtml(fullName)}</div>
+                <div class="small text-muted truncate">${escapeHtml(email)}</div>
+              </div>
+              </div>
+              <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-primary add-suggest-btn">Send friend request</button>
+              </div>
+            `;
+            frag.appendChild(li);
+          });
+          listEl.appendChild(frag);
+        }
+
+        async function sendRequest(li){
+          const btn = li.querySelector('.add-suggest-btn');
+          if(!btn) return;
+          const receiver_id = Number(li.dataset.userId);
+          const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+          const sender_id = Number(auth?.user_id);
+          if(!sender_id || !receiver_id){
+            showToast('Thiếu thông tin người dùng','danger');
+            return;
+          }
+          btn.disabled = true;
+          const original = btn.textContent;
+          btn.textContent = '...';
+          try {
+            // Use the same friend request endpoint used elsewhere
+            const res = await fetch('/api/friends/request', {
+              method:'POST',
+              credentials:'include',
+              headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ sender_id, receiver_id })
+            });
+            if(!res.ok){
+              let msg='Gửi thất bại';
+              try { const j=await res.json(); if(j.message) msg=j.message; } catch {}
+              throw new Error(msg);
+            }
+            btn.classList.remove('btn-outline-primary');
+            btn.classList.add('btn-success');
+            btn.textContent = 'Đã gửi';
+            showToast('Đã gửi lời mời kết bạn','success');
+            document.dispatchEvent(new Event('friends:refresh'));
+          } catch(e){
+            btn.disabled = false;
+            btn.textContent = original;
+            showToast(e.message || 'Lỗi gửi yêu cầu','danger');
+          }
+        }
+
+        function toggleLoading(state){
+          refreshBtn.disabled = state;
+          refreshBtn.textContent = state ? 'Đang tải...' : 'Làm mới';
+        }
+
+        listEl.addEventListener('click', e=>{
+          const btn = e.target.closest('.add-suggest-btn');
+          if(!btn) return;
+          const li = btn.closest('li');
+          sendRequest(li);
+        });
+
+        refreshBtn.addEventListener('click', fetchSuggestions);
+        searchInput.addEventListener('input', applyFilter);
+        document.addEventListener('friends:refresh', fetchSuggestions);
+
+        fetchSuggestions();
+      })();
+    </script>
+    <!-- Suggested Friends:END -->
+
+  </main>
+  <!-- Main:END -->
+
+  <!-- Toasts -->
+  <div class="position-fixed top-0 end-0 p-3" style="z-index:1080">
+    <div id="toastContainer"></div>
+  </div>
+
+  <!-- Bootstrap script -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+          crossorigin="anonymous"></script>
+
+
+  <!-- Global Handler -->
+   <script>
+      let showTempToast = function (msg,type='info'){
+        const container = document.getElementById('toastContainer');
+        if(!container) return;
+        const el = document.createElement('div');
+        el.className = `toast align-items-center text-bg-${type} border-0 show mb-2`;
+        el.innerHTML = `
+          <div class="d-flex">
+            <div class="toast-body">${escapeHtml(msg)}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>`;
+        container.appendChild(el);
+        setTimeout(()=> el.remove(),4000);
+      }
+
+      var handleUnfriend = async function(targetFriendId) {
+        if (!targetFriendId) return;
+        try {
+          const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+          const sender_id = auth?.user_id;
+          if (!sender_id) throw new Error('Missing user info');
+          const res = await fetch('/api/friends/unfriend', {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sender_id: Number(sender_id),
+              receiver_id: Number(targetFriendId)
+            })
+          });
+          if (!res.ok) {
+            let msg = 'Remove failed';
+            try { const j = await res.json(); if (j.message) msg = j.message; } catch {}
+            throw new Error(msg);
+          }
+          document.dispatchEvent(new Event('friends:refresh'));
+          showTempToast('Friend removed', 'success');
+        } catch (e) {
+          showTempToast(e.message || 'Error removing friend', 'danger');
+        }
+      }
+   </script>
+
+</body>
+</html>
