@@ -141,11 +141,24 @@
                 <div th:replace="fragments/postComposer :: postComposer"></div>
                  <!-- Nhúng fragment postComposerModal -->
                 <div th:replace="fragments/postComposer :: postComposerModal"></div>
+
                 <!-- Nhúng fragment postSegment -->
+                <div id="homeFeed">
                 <div th:replace="~{fragments/postSegment :: postSegment(
                     fetchUrl=@{/api/posts/suitable/{id}(id=${userId})},
-                    isSelfProfile=${'false'}
+                    isSelfProfile=${'false'},
+                    containerId='homePostSegment'
                 )}"></div>
+                </div>
+
+                <!-- postSegment cho các bài viết quan trọng, ẩn nó đi ban đầu-->
+                <div id="importantFeed" class="d-none">
+                    <div th:replace="~{fragments/postSegment :: postSegment(
+                        fetchUrl=@{/api/posts/important},
+                        isSelfProfile=${'false'},
+                        containerId='importantPostSegment'
+                    )}"></div>
+                </div>
 
             </div>
             <!-- Feed:END -->

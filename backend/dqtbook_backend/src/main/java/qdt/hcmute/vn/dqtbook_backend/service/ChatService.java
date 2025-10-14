@@ -409,7 +409,7 @@ public class ChatService {
 
         // Calculate unread message count for this user
         if (userId != null) {
-            // TODO: Optimize this with a better query
+            
             long unreadCount = messages.stream()
                     .filter(message -> {
                         MessageReadStatus readStatus = messageReadStatusRepository

@@ -10,8 +10,8 @@ import qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostContentResponseDTO;
 
 import java.util.List;
-import org.springframework.web.bind.annotation.GetMapping;
 
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -119,6 +119,13 @@ public class PostController {
             ErrorResponse err = new ErrorResponse(500, "internal server error: " + ex.getMessage());
             return ResponseEntity.status(500).body(err);
         }
+    }
+
+    
+    @GetMapping("/important")
+    public ResponseEntity<List<PostContentResponseDTO>> getImportantPosts() {
+        List<PostContentResponseDTO> importantPosts = postService.getImportantPosts();
+        return new ResponseEntity<>(importantPosts, HttpStatus.OK);
     }
 
 }

@@ -33,24 +33,11 @@
   </head>
   <body>
 
-    <div th:fragment="postSegment(fetchUrl, isSelfProfile)">
-        <!-- Khai báo biến Thymeleaf cho JavaScript -->
-        <p th:text="${fetchUrl}" id="fetchUrl_id" style="display: none;"></p>
-        <p th:text="${isSelfProfile}" id="isSelfProfile_id" hidden></p>
-        <script th:inline="javascript">
-            /*<![CDATA[*/
-            const fetchUrl = document.getElementById('fetchUrl_id').textContent;
-            /*]]>*/
-            var isSelfProfile = (function(){
-                const el = document.getElementById('isSelfProfile_id');
-                if(!el) return 'false';
-                const val = el.textContent.trim().toLowerCase();
-                return val === 'true' || val === '1';
-            })();
-        </script>
-
+    <div th:fragment="postSegment(fetchUrl, isSelfProfile, containerId)" th:id="${containerId}">
+        
+        
       <!-- Post Segment:BEGIN -->
-      <div id="postList" class="post-feed"></div>
+      <div class="post-feed"></div>
 
       <template id="postCardTemplate">
           <article class="post-card" data-post-id="">
@@ -346,12 +333,24 @@
       } */
       </style>
 
-      <script>
+      <script th:inline="javascript">
       (function(){
-          const listEl = document.getElementById('postList');
-          const tpl = document.getElementById('postCardTemplate');
+        const containerId = /*[[${containerId}]]*/ 'defaultContainer';
+        const fetchUrl = /*[[${fetchUrl}]]*/ '/default/api/url';
+        const isSelfProfile = (/*[[${isSelfProfile}]]*/ false);
 
-          function showSkeleton(count=3){
+        // Dùng containerId duy nhất để tìm đúng container cha của fragment này.
+        const segmentContainer = document.getElementById(containerId);
+        if (!segmentContainer) 
+        {
+            console.error('Lỗi nghiêm trọng: Không tìm thấy container cho fragment với ID:', containerId);
+            return; // Dừng script ngay lập tức nếu không tìm thấy container.
+        }
+
+        const listEl = segmentContainer.querySelector('.post-feed');
+        const tpl = document.getElementById('postCardTemplate');
+
+        function showSkeleton(count=3){
               listEl.innerHTML='';
               for(let i=0;i<count;i++){
                   const sk=document.createElement('div');
@@ -493,7 +492,24 @@
               return d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
           }
 
-          loadPosts();
+          // Chỉ load bài viết khi fragment được hiển thị
+        if (listEl && listEl.closest('.d-none') === null) 
+        {
+            loadPosts();
+        }
+        // Thêm event listener để load lại khi tab được chuyển
+        document.querySelectorAll('.top-tabs .nav-link').forEach(a => {
+            a.addEventListener('click', () => {
+                setTimeout(() => { 
+                    // Kiểm tra xem fragment này có đang hiển thị không và đã có nội dung chưa
+                    if (listEl && listEl.closest('.d-none') === null && listEl.innerHTML === '') {
+                        loadPosts();
+                    }
+                }, 10);
+            });
+        });
+
+        
       })();
       </script>
       <!-- Post Segment:END -->

@@ -59,6 +59,13 @@
                             <img src="/img/home-icon.png" class="nav-ico" alt="">
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="important" title="Quan trọng">
+                            <i class="bi bi-star-fill nav-ico" style="width: 26px; height: 26px; text-align: center;"></i>
+                        </a>
+                    </li>
+
                     <li class="nav-item">
                         <a class="nav-link" href="#" data-page="friends" aria-label="Bạn bè" title="Bạn bè">
                             <img src="/img/friends-icon.png" class="nav-ico" alt="">
@@ -598,6 +605,17 @@
                 document.querySelectorAll('.top-tabs .nav-link').forEach(n=>n.classList.remove('active'));
                 a.classList.add('active');
                 // TODO: load content by data-page if needed
+                const page = a.getAttribute('data-page');
+                const homeFeed = document.getElementById('homeFeed');
+                const importantFeed = document.getElementById('importantFeed');
+                
+                if (page === 'home') {
+                    if (homeFeed) homeFeed.classList.remove('d-none');
+                    if (importantFeed) importantFeed.classList.add('d-none');
+                } else if (page === 'important') {
+                    if (homeFeed) homeFeed.classList.add('d-none');
+                    if (importantFeed) importantFeed.classList.remove('d-none');
+                }
             });
         });
     </script>

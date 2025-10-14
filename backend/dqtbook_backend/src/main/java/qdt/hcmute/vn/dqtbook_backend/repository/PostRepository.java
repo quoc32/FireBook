@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Integer> {
   List<Post> findByAuthorId(Integer authorId);
+   List<Post> findByPostTypeOrderByCreatedAtDesc(String postType);
 }

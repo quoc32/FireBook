@@ -38,4 +38,6 @@ public class AuthResponseDTO {
 
     @JsonProperty("cover_photo_url")
     private String coverPhotoUrl;
+
+    private String role;
 }

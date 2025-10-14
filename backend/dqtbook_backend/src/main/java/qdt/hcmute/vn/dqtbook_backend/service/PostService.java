@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.security.access.AccessDeniedException;
+
 @Service
 public class PostService {
 
@@ -342,6 +344,18 @@ public class PostService {
         // Todo: 2. Lấy thông tin User từ DB (theo authorId).
         Optional<User> userOpt = userRepository.findById(ReqDTO.getAuthorId());
         if (userOpt.isEmpty()) throw new IllegalArgumentException("author not found for id=" + ReqDTO.getAuthorId());
+
+        // Nếu bài viết được đánh dấu là "important", hãy kiểm tra vai trò của người dùng
+        if ("important".equalsIgnoreCase(ReqDTO.getPostType())) 
+        {
+            String userRole = userOpt.get().getRole();
+            // Chỉ cho phép các vai trò này đăng bài quan trọng (bạn có thể tùy chỉnh)
+            if (!"lecturer".equals(userRole) && !"special".equals(userRole) && !"admin".equals(userRole)) 
+            {
+                throw new AccessDeniedException("User does not have permission to create an important post.");
+            }
+        }
+
         // Todo: 3. Tạo entity Post và lưu vào DB.
         Post p = new Post();
         p.setAuthor(userOpt.get());
@@ -412,5 +426,49 @@ public class PostService {
 
     public void deletePost(Integer id) {
         postRepository.deleteById(id);
+    }
+
+
+    /*
+     * Hàm lấy bài viết quan trọng
+     */
+    public List<PostContentResponseDTO> getImportantPosts() 
+    {
+        
+        List<Post> importantPosts = postRepository.findByPostTypeOrderByCreatedAtDesc("important");
+
+        // Ánh xạ sang DTO để trả về (tái sử dụng logic từ hàm getAllPosts)
+        List<PostContentResponseDTO> dtos = importantPosts.stream()
+            .map(post -> {
+                PostContentResponseDTO dto = new PostContentResponseDTO();
+                dto.setId(post.getId());
+                dto.setContent(post.getContent());
+                dto.setVisibility(post.getVisibility());
+                dto.setPostType(post.getPostType());
+                dto.setStatus(post.getStatus());
+                dto.setCreatedAt(post.getCreatedAt());
+
+                // map author
+                PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
+                if (post.getAuthor() != null) 
+                {
+                    authorDto.setId(post.getAuthor().getId());
+                    authorDto.setFullName(post.getAuthor().getFullName());
+                    authorDto.setAvatarUrl(post.getAuthor().getAvatarUrl());
+                    authorDto.setEmail(post.getAuthor().getEmail());
+                }
+                dto.setAuthor(authorDto);
+
+                // map medias
+                List<PostContentResponseDTO.MediaDTO> mediaDtos = post.getMedias().stream()
+                        .map(m -> new PostContentResponseDTO.MediaDTO(m.getMediaType(), m.getMediaUrl()))
+                        .toList();
+                dto.setMedia(mediaDtos);
+
+                return dto;
+        })
+        .toList();
+
+        return dtos;
     }
 }
