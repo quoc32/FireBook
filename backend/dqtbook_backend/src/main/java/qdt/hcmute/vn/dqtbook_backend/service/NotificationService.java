@@ -52,7 +52,7 @@ public class NotificationService {
 
         // Gửi thông báo real-time đến kênh riêng của người nhận
         messagingTemplate.convertAndSendToUser(
-                recipient.getEmail(), // Định danh người nhận bằng email (hoặc username)
+                String.valueOf(recipient.getId()), // <-- THAY ĐỔI Ở ĐÂY: Dùng User ID làm định danh
                 "/queue/notifications",
                 dto);
     }

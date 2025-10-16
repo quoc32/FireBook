@@ -12,15 +12,17 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(new SessionInterceptor())
                 .addPathPatterns("/**")              // áp dụng cho tất cả các request
                 .excludePathPatterns(
-                        "/api/auth/login", 
-                        "/api/auth/logout",  // cho phép logout mà không cần session
-                        "/api/users/register",  // đăng ký tài khoản
-                        "/error", 
-                        "/css/**", 
-                        "/js/**", 
-                        "/images/**",
+                        "/api/auth/login",
+                        "/api/auth/logout",
+                        "/api/users/register",
+                        "/error",
+                        "/css/**",
+                        "/js/**",
+                        "/img/**",
+                        "/static/**",
+                        "/ws/**",       // Cho phép WebSocket đi qua mà không cần session
                         "/views/**",
-                        "/home",  // trang chủ
+                        "/home",
                         "/"
                 ); // bỏ qua các path không cần check session
     }
