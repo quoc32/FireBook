@@ -181,10 +181,10 @@
 
                     <!-- Notifications -->
                     <li class="nav-item dropdown position-relative">
-                        <button class="btn-reset notif-btn-neo" id="notifBtn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Thông báo (3 mới)">
+                        <button class="btn-reset notif-btn-neo" id="notifBtn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Thông báo">
                             <span class="notif-ring"></span>
                             <img src="/img/bell-icon.png" alt="" width="22" height="22" draggable="false">
-                            <span class="notif-badge pulse" data-count="3">3</span>
+                            <span class="notif-badge" data-count="0">0</span>
                         </button>
                         <div class="dropdown-menu notif-menu dropdown-menu-end shadow-lg border-0 p-0" aria-labelledby="notifBtn">
                             <div class="nm-header d-flex align-items-center">
@@ -192,27 +192,10 @@
                                 <button class="btn-mark-read" id="markAllNotif" title="Đánh dấu đã đọc">Đã đọc</button>
                             </div>
                             <div class="nm-list" id="notifList">
-                                <a href="#" class="nm-item new">
-                                    <div class="dot"></div>
-                                    <div class="txt">
-                                        <strong>Linh Trần</strong> đã thích bài viết của bạn
-                                        <div class="time">2 phút trước</div>
-                                    </div>
-                                </a>
-                                <a href="#" class="nm-item new">
-                                    <div class="dot"></div>
-                                    <div class="txt">
-                                        <strong>An Nguyễn</strong> đã bình luận: "OK nhé!"
-                                        <div class="time">10 phút trước</div>
-                                    </div>
-                                </a>
-                                <a href="#" class="nm-item new">
-                                    <div class="dot"></div>
-                                    <div class="txt">
-                                        Bạn có 1 lời mời kết bạn mới
-                                        <div class="time">30 phút trước</div>
-                                    </div>
-                                </a>
+                                <!-- Thông báo thực tế sẽ được chèn vào đây bằng JavaScript -->
+                                <div class="text-center p-3 small text-muted d-none" id="no-notifications">
+                                    Không có thông báo mới.
+                                </div>
                             </div>
                             <div class="nm-footer">
                                 <a href="#" class="view-all">Xem tất cả</a>
@@ -523,8 +506,8 @@
                         .search-box { width:140px; }
                     }
                 </style>
-
-                <script>
+    
+    <script>
                 (function(){
                  const notifBtn=document.getElementById('notifBtn');
                  const notifList=document.getElementById('notifList');
@@ -543,7 +526,7 @@
                    }
                  }
                  markBtn?.addEventListener('click',e=>{
-                   e.preventDefault();
+                e.preventDefault();
                    markAll();
                  });
                  document.addEventListener('shown.bs.dropdown',e=>{
@@ -557,44 +540,44 @@
                          el.style.transform='translateY(0)';
                        }, 40*i+40);
                      });
-                   }
-                 });
+                }
+            });
                 })();
-                </script>
+    </script>
 
-                <!-- Logout logic -->
-                <script>
-                (function(){
-                 const btn = document.getElementById('logoutBtn');
-                 if(!btn) return;
-                 btn.addEventListener('click', async (e)=>{
-                   e.preventDefault();
-                   if(btn.dataset.loading) return;
-                   btn.dataset.loading = '1';
-                   const original = btn.innerHTML;
-                   btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i><span> Đang đăng xuất...</span>';
-                   try{
-                     const res = await fetch('http://localhost:8080/api/auth/logout', {
-                       method: 'POST',
-                       headers: { 'Content-Type':'application/json' },
-                       body: '{}',
-                       credentials:'include'
-                     });
-                     if(!res.ok) throw new Error('Logout failed');
-                     try{ localStorage.removeItem('auth'); }catch(_){}
-                     window.location.href = '/views/login';
-                   }catch(err){
-                     btn.innerHTML = original;
-                     delete btn.dataset.loading;
-                     alert('Không thể đăng xuất. Vui lòng thử lại.');
-                   }
-                 });
-                })();
-                </script>
-                <style>
-                .spin{display:inline-block;animation:sp 1s linear infinite;}
-                @keyframes sp{to{transform:rotate(360deg)}}
-                </style>
+    <!-- Logout logic -->
+    <script>
+    (function(){
+        const btn = document.getElementById('logoutBtn');
+        if(!btn) return;
+        btn.addEventListener('click', async (e)=>{
+        e.preventDefault();
+        if(btn.dataset.loading) return;
+        btn.dataset.loading = '1';
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i><span> Đang đăng xuất...</span>';
+        try{
+            const res = await fetch('http://localhost:8080/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Content-Type':'application/json' },
+            body: '{}',
+            credentials:'include'
+            });
+            if(!res.ok) throw new Error('Logout failed');
+            try{ localStorage.removeItem('auth'); }catch(_){}
+            window.location.href = '/views/login';
+        }catch(err){
+            btn.innerHTML = original;
+            delete btn.dataset.loading;
+            alert('Không thể đăng xuất. Vui lòng thử lại.');
+        }
+        });
+    })();
+    </script>
+    <style>
+    .spin{display:inline-block;animation:sp 1s linear infinite;}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    </style>
                 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
             </div>
         </div>
@@ -615,11 +598,11 @@
                 } else if (page === 'important') {
                     if (homeFeed) homeFeed.classList.add('d-none');
                     if (importantFeed) importantFeed.classList.remove('d-none');
-                }
+        }
             });
-        });
+    });
     </script>
-    
+
     </nav>
     <!-- Navbar:END -->
 

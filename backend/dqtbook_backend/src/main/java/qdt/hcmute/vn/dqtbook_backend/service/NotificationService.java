@@ -33,6 +33,9 @@ public class NotificationService {
         notification.setSourceId(sourceId);
         notification.setIsRead(false);
 
+        // Giả sử Notification có hàm setCreatedAt, nếu không có thì cần thêm vào model
+        // notification.setCreatedAt(java.time.Instant.now()); 
+
         Notification savedNotification = notificationRepository.save(notification);
 
         NotificationDTO dto = NotificationDTO.builder()
@@ -42,9 +45,9 @@ public class NotificationService {
                 .senderAvatarUrl(sender.getAvatarUrl())
                 .type(type)
                 .content(buildContent(sender, type))
-                .link(buildLink(sender, type))
+                .link(buildLink(sender, type, sourceId)) // <-- Lệnh gọi bây giờ đã hợp lệ
                 .isRead(false)
-                .createdAt(LocalDateTime.ofInstant(savedNotification.getCreatedAt(), ZoneId.systemDefault()))
+                .createdAt(LocalDateTime.ofInstant(savedNotification.getCreatedAt() != null ? savedNotification.getCreatedAt() : java.time.Instant.now(), ZoneId.systemDefault()))
                 .build();
 
         // Gửi thông báo real-time đến kênh riêng của người nhận
@@ -55,17 +58,29 @@ public class NotificationService {
     }
 
     private String buildContent(User sender, String type) {
+        if ("friend_request".equals(type)) {
+            return sender.getFullName() + " đã gửi cho bạn một lời mời kết bạn.";
+        }
         if ("friend_request_accepted".equals(type)) {
             return sender.getFullName() + " đã chấp nhận lời mời kết bạn của bạn.";
         }
-        // Thêm các case khác sau này
-        // case "new_comment": return sender.getFullName() + " đã bình luận...";
+        if ("new_important_post".equals(type)) {
+            return sender.getFullName() + " vừa đăng một bài viết quan trọng.";
+        }
         return "Bạn có thông báo mới.";
     }
 
-    private String buildLink(User sender, String type) {
+    // Thêm "Integer sourceId" vào danh sách tham số của phương thức
+    private String buildLink(User sender, String type, Integer sourceId) {
+        if ("friend_request".equals(type)) {
+            return "/views/friends";
+        }
         if ("friend_request_accepted".equals(type)) {
             return "/views/user/" + sender.getId();
+        }
+        if ("new_important_post".equals(type)) {
+            // Bây giờ biến sourceId đã được định nghĩa và hợp lệ
+            return "/views/post/" + sourceId;
         }
         return "#";
     }

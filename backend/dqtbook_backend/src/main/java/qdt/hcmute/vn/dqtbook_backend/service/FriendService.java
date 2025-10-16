@@ -15,6 +15,7 @@ import qdt.hcmute.vn.dqtbook_backend.model.FriendId;
 import qdt.hcmute.vn.dqtbook_backend.model.FriendStatus;
 import qdt.hcmute.vn.dqtbook_backend.repository.FriendRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.UserRepository;
+import qdt.hcmute.vn.dqtbook_backend.model.User;
 
 import java.time.Instant;
 import java.util.List;
@@ -26,14 +27,16 @@ public class FriendService {
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
     private final UserService userService;
+    private final NotificationService notificationService;
     
     @Autowired
     private HttpSession session;
 
-    public FriendService(FriendRepository friendRepository, UserRepository userRepository, UserService userService) {
+    public FriendService(FriendRepository friendRepository, UserRepository userRepository, UserService userService, NotificationService notificationService) {
         this.friendRepository = friendRepository;
         this.userRepository = userRepository;
         this.userService = userService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -121,6 +124,21 @@ public class FriendService {
         friend.setUpdatedAt(Instant.now());
 
         Friend savedFriend = friendRepository.save(friend);
+        try {
+            User sender = userRepository.findById(senderId).orElse(null);
+            User receiver = userRepository.findById(receiverId).orElse(null);
+            if (sender != null && receiver != null) {
+                notificationService.createAndSendNotification(
+                    sender,
+                    receiver,
+                    "friend_request", // Đây là loại thông báo mới
+                    sender.getId()    // Nguồn: ID của người gửi để có thể tạo link
+                );
+            }
+        } catch (Exception e) {
+            // Ghi log lỗi nếu cần, nhưng không làm gián đoạn luồng chính
+            System.err.println("Lỗi khi gửi thông báo kết bạn: " + e.getMessage());
+        }
         return Optional.of(convertToResponseDTO(savedFriend, senderId));
     }
 

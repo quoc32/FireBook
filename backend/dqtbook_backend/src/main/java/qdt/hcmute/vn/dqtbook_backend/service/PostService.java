@@ -31,15 +31,17 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostMediaRepository postMediaRepository;
     private final FriendRepository friendRepository;
+    private final NotificationService notificationService;
 
     @Autowired
     private HttpSession session;
 
-    public PostService(PostRepository postRepository, UserRepository userRepository, PostMediaRepository postMediaRepository, FriendRepository friendRepository) {
+    public PostService(PostRepository postRepository, UserRepository userRepository, PostMediaRepository postMediaRepository, FriendRepository friendRepository, NotificationService notificationService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.postMediaRepository = postMediaRepository;
         this.friendRepository = friendRepository;
+        this.notificationService = notificationService;
     }
 
     public ResponseEntity<List<PostContentResponseDTO>> getAllPosts() {
@@ -380,6 +382,26 @@ public class PostService {
         }
         PostCreateResponseDTO ResDTO = toPostCreateResponseDTO(savedPost, savedPostMedias);
         
+        if ("important".equalsIgnoreCase(savedPost.getPostType())) {
+            try {
+                User sender = userOpt.get();
+                // Lấy danh sách ID của tất cả bạn bè
+                List<Integer> friendIds = friendRepository.findFriendIdsByUserId(sender.getId());
+
+                for (Integer friendId : friendIds) {
+                    userRepository.findById(friendId).ifPresent(recipient -> {
+                        notificationService.createAndSendNotification(
+                            sender,
+                            recipient,
+                            "new_important_post", // Loại thông báo mới
+                            savedPost.getId()     // Nguồn: ID của bài viết để tạo link
+                        );
+                    });
+                }
+            } catch (Exception e) {
+                System.err.println("Lỗi khi gửi thông báo bài viết quan trọng: " + e.getMessage());
+            }
+        }
         return Optional.of(ResDTO);
     }
 
