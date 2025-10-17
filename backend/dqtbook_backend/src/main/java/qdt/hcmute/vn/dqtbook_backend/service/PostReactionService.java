@@ -18,15 +18,19 @@ public class PostReactionService {
     private final PostReactionRepository postReactionRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public PostReactionService(PostReactionRepository postReactionRepository, PostRepository postRepository, UserRepository userRepository) {
+    public PostReactionService(PostReactionRepository postReactionRepository,
+                               PostRepository postRepository,
+                               UserRepository userRepository,
+                               NotificationService notificationService) {
         this.postReactionRepository = postReactionRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     public List<PostReaction> getReactionsForPost(Integer postId) {
-        // ensure post exists
         if (!postRepository.existsById(postId)) {
             throw new qdt.hcmute.vn.dqtbook_backend.exception.ResourceNotFoundException("Post not found");
         }
@@ -42,11 +46,11 @@ public class PostReactionService {
         Optional<Post> postOpt = postRepository.findById(postId);
         if (postOpt.isEmpty()) return Optional.empty();
         Post post = postOpt.get();
-        // validate user exists
+
         if (reaction.getUser() == null || reaction.getUser().getId() == null) return Optional.empty();
         Optional<User> userOpt = userRepository.findById(reaction.getUser().getId());
         if (userOpt.isEmpty()) return Optional.empty();
-        // validate reaction type (not null) and normalize
+
         if (reaction.getReactionType() == null || reaction.getReactionType().trim().isEmpty()) {
             reaction.setReactionType("like");
         } else {
@@ -60,19 +64,30 @@ public class PostReactionService {
                     reaction.setReactionType(t);
                     break;
                 default:
-                    // unknown type -> default to like
                     reaction.setReactionType("like");
             }
         }
         reaction.setPost(post);
         reaction.setUser(userOpt.get());
-        // check duplicate: same user already reacted to this post
+
         Optional<PostReaction> existing = postReactionRepository.findByPostIdAndUserId(postId, userOpt.get().getId());
         if (existing.isPresent()) {
             throw new qdt.hcmute.vn.dqtbook_backend.exception.DuplicateReactionException("Reaction already exists for this user on the post");
         }
         if (reaction.getCreatedAt() == null) reaction.setCreatedAt(Instant.now());
         PostReaction saved = postReactionRepository.saveAndFlush(reaction);
+
+        // Gửi thông báo cho chủ post (tránh tự thông báo)
+        try {
+            User postOwner = post.getAuthor();
+            User reactor = userOpt.get();
+            if (postOwner != null && !postOwner.getId().equals(reactor.getId())) {
+                notificationService.createAndSendNotification(
+                        reactor, postOwner, "post_reaction", post.getId()
+                );
+            }
+        } catch (Exception ignored) {}
+
         return Optional.of(saved);
     }
 
@@ -83,4 +98,3 @@ public class PostReactionService {
         postReactionRepository.deleteById(id);
     }
 }
-

@@ -19,11 +19,16 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public CommentService(CommentRepository commentRepository, PostRepository postRepository, UserRepository userRepository) {
+    public CommentService(CommentRepository commentRepository,
+                          PostRepository postRepository,
+                          UserRepository userRepository,
+                          NotificationService notificationService) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     public List<Comment> getCommentsForPost(Integer postId) {
@@ -50,26 +55,35 @@ public class CommentService {
         if (comment.getCreatedAt() == null) {
             comment.setCreatedAt(Instant.now());
         }
-        // handle parent comment if provided
         if (comment.getParentCommentId() != null) {
             Optional<Comment> parentOpt = commentRepository.findById(comment.getParentCommentId());
             if (parentOpt.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Parent comment not found");
             comment.setParentComment(parentOpt.get());
         }
-        return Optional.of(commentRepository.save(comment));
+        Comment saved = commentRepository.save(comment);
+
+        // Gửi thông báo cho chủ bài viết (tránh tự thông báo)
+        try {
+            User postOwner = post.getAuthor();
+            User commenter = userOpt.get();
+            if (postOwner != null && !postOwner.getId().equals(commenter.getId())) {
+                notificationService.createAndSendNotification(
+                        commenter, postOwner, "post_comment", post.getId()
+                );
+            }
+        } catch (Exception ignored) {}
+
+        return Optional.of(saved);
     }
 
     public Optional<Comment> updateComment(Integer postId, Integer id, Comment updated) {
-        // ensure post exists first
         if (!postRepository.existsById(postId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
         }
         Optional<Comment> opt = commentRepository.findById(id);
         if (opt.isEmpty()) return Optional.empty();
         Comment existing = opt.get();
-        // ensure the comment belongs to the post in the path
         if (existing.getPost() == null || existing.getPost().getId() == null || !existing.getPost().getId().equals(postId)) {
-            // treat as not found when mismatch
             return Optional.empty();
         }
         existing.setContent(updated.getContent());
@@ -78,7 +92,6 @@ public class CommentService {
     }
 
     public void deleteComment(Integer postId, Integer id) {
-        // ensure post exists
         if (!postRepository.existsById(postId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
         }

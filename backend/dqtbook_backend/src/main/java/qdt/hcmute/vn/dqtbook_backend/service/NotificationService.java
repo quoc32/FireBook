@@ -8,8 +8,10 @@ import qdt.hcmute.vn.dqtbook_backend.model.Notification;
 import qdt.hcmute.vn.dqtbook_backend.model.User;
 import qdt.hcmute.vn.dqtbook_backend.repository.NotificationRepository;
 import qdt.hcmute.vn.dqtbook_backend.dto.NotificationDTO;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Objects;
 
 @Service
 public class NotificationService {
@@ -22,9 +24,7 @@ public class NotificationService {
 
     @Transactional
     public void createAndSendNotification(User sender, User recipient, String type, Integer sourceId) {
-        if (sender.getId().equals(recipient.getId())) {
-            return; // Không tự gửi thông báo cho chính mình
-        }
+        if (Objects.equals(sender.getId(), recipient.getId())) return;
 
         Notification notification = new Notification();
         notification.setSender(sender);
@@ -33,55 +33,50 @@ public class NotificationService {
         notification.setSourceId(sourceId);
         notification.setIsRead(false);
 
-        // Giả sử Notification có hàm setCreatedAt, nếu không có thì cần thêm vào model
-        // notification.setCreatedAt(java.time.Instant.now()); 
+        Notification saved = notificationRepository.save(notification);
 
-        Notification savedNotification = notificationRepository.save(notification);
+        LocalDateTime createdAt = LocalDateTime.ofInstant(
+                saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.Instant.now(),
+                ZoneId.systemDefault()
+        );
 
         NotificationDTO dto = NotificationDTO.builder()
-                .notificationId(savedNotification.getId())
+                .notificationId(saved.getId())
                 .senderId(sender.getId())
                 .senderName(sender.getFullName())
                 .senderAvatarUrl(sender.getAvatarUrl())
                 .type(type)
                 .content(buildContent(sender, type))
-                .link(buildLink(sender, type, sourceId)) // <-- Lệnh gọi bây giờ đã hợp lệ
+                .link(buildLink(sender, type, sourceId))
                 .isRead(false)
-                .createdAt(LocalDateTime.ofInstant(savedNotification.getCreatedAt() != null ? savedNotification.getCreatedAt() : java.time.Instant.now(), ZoneId.systemDefault()))
+                .createdAt(createdAt)
                 .build();
 
-        // Gửi thông báo real-time đến kênh riêng của người nhận
-        messagingTemplate.convertAndSendToUser(
-                String.valueOf(recipient.getId()), // <-- THAY ĐỔI Ở ĐÂY: Dùng User ID làm định danh
-                "/queue/notifications",
-                dto);
+        // 1) Theo user-destination (yêu cầu Principal.name = userId)
+        messagingTemplate.convertAndSendToUser(String.valueOf(recipient.getId()),
+                "/queue/notifications", dto);
+
+        // 2) Fallback theo topic riêng userId (client có thể subscribe thêm)
+        messagingTemplate.convertAndSend("/topic/notifications." + recipient.getId(), dto);
     }
 
     private String buildContent(User sender, String type) {
-        if ("friend_request".equals(type)) {
-            return sender.getFullName() + " đã gửi cho bạn một lời mời kết bạn.";
-        }
-        if ("friend_request_accepted".equals(type)) {
-            return sender.getFullName() + " đã chấp nhận lời mời kết bạn của bạn.";
-        }
-        if ("new_important_post".equals(type)) {
-            return sender.getFullName() + " vừa đăng một bài viết quan trọng.";
-        }
-        return "Bạn có thông báo mới.";
+        return switch (type) {
+            case "friend_request" -> sender.getFullName() + " đã gửi cho bạn một lời mời kết bạn.";
+            case "friend_request_accepted" -> sender.getFullName() + " đã chấp nhận lời mời kết bạn của bạn.";
+            case "post_comment" -> sender.getFullName() + " đã bình luận vào bài viết của bạn.";
+            case "post_reaction" -> sender.getFullName() + " đã thả reaction bài viết của bạn.";
+            case "new_important_post", "important_post" -> "Có bài viết quan trọng mới!";
+            default -> "Bạn có thông báo mới.";
+        };
     }
 
-    // Thêm "Integer sourceId" vào danh sách tham số của phương thức
     private String buildLink(User sender, String type, Integer sourceId) {
-        if ("friend_request".equals(type)) {
-            return "/views/friends";
-        }
-        if ("friend_request_accepted".equals(type)) {
-            return "/views/user/" + sender.getId();
-        }
-        if ("new_important_post".equals(type)) {
-            // Bây giờ biến sourceId đã được định nghĩa và hợp lệ
-            return "/views/post/" + sourceId;
-        }
-        return "#";
+        return switch (type) {
+            case "friend_request", "friend_request_accepted" -> "/views/friends";
+            case "post_comment", "post_reaction" -> (sourceId != null ? "/views/post/" + sourceId : "/views/user/" + sender.getId());
+            case "new_important_post", "important_post" -> "/views/important-posts";
+            default -> "#";
+        };
     }
 }

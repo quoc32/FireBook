@@ -546,6 +546,120 @@
     </script>
 
     <!-- Logout logic -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stomp-websocket@2.3.3/lib/stomp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+    <script>
+    (function(){
+    if (window.__notifWSInited) return;
+    window.__notifWSInited = true;
+
+    const listEl  = document.getElementById('notifList');
+    const badgeEl = document.querySelector('#notifBtn .notif-badge');
+    const emptyEl = document.getElementById('no-notifications');
+    const markBtn = document.getElementById('markAllNotif');
+
+    // Khử trùng lặp theo notification_id (ưu tiên), fallback key khi thiếu id
+    const seenKeys = new Set();
+    const seenQueue = [];
+    const MAX_SEEN = 500;
+
+    function makeKey(n){
+        const id = n.notification_id || n.notificationId;
+        if (id != null) return 'id:' + id;
+        const sender = n.sender_id || n.senderId || '';
+        const t = n.type || '';
+        const link = n.link || '';
+        const ts = n.created_at || n.createdAt || '';
+        return `f:${t}|${sender}|${link}|${ts}`;
+    }
+    function remember(key){
+        seenKeys.add(key);
+        seenQueue.push(key);
+        if (seenQueue.length > MAX_SEEN){
+        const old = seenQueue.shift();
+        seenKeys.delete(old);
+        }
+    }
+
+    function incBadge(){
+        if(!badgeEl) return;
+        const cur = parseInt(badgeEl.dataset.count || badgeEl.textContent || '0', 10) + 1;
+        badgeEl.dataset.count = String(cur);
+        badgeEl.textContent   = String(cur);
+        badgeEl.classList.add('pulse');
+    }
+    function resetBadge(){
+        if(!badgeEl) return;
+        badgeEl.dataset.count = '0';
+        badgeEl.textContent   = '0';
+        badgeEl.classList.remove('pulse');
+    }
+    function timeFmt(v){ try{ return new Date(v).toLocaleString(); }catch(_){ return ''; } }
+
+    function addItem(n){
+        const k = makeKey(n);
+        if (seenKeys.has(k)) return;      // BỎ QUA thông báo trùng
+        remember(k);
+
+        if(emptyEl) emptyEl.classList.add('d-none');
+        const a = document.createElement('a');
+        a.className = 'nm-item new';
+        a.href = n.link || '#';
+        a.innerHTML = `
+        <span class="dot"></span>
+        <img src="${n.sender_avatar_url || n.senderAvatarUrl || '/img/image1.png'}" width="32" height="32" class="rounded-circle" alt="">
+        <div>
+            <div><strong>${n.sender_name || n.senderName || 'Người dùng'}</strong> ${n.content || ''}</div>
+            <div class="time">${timeFmt(n.created_at || n.createdAt)}</div>
+        </div>`;
+        listEl?.prepend(a);
+        incBadge();
+    }
+
+    markBtn?.addEventListener('click', e => { e.preventDefault(); resetBadge(); });
+
+    // Lấy uid để thêm vào SockJS khi cần
+    let uid = null;
+    try {
+        const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+        uid = auth?.user_id || auth?.id || auth?.userId || null;
+    } catch {}
+
+    const sockUrlFactory = () => new SockJS(uid ? `/ws?uid=${encodeURIComponent(uid)}` : '/ws');
+
+    // Ưu tiên thư viện Stomp cũ; fallback sang StompJs UMD
+    const useUserQueue = (clientLike) => {
+        clientLike.subscribe('/user/queue/notifications', m => { try{ addItem(JSON.parse(m.body)); }catch(e){} });
+    };
+    const useTopicFallback = (clientLike) => {
+        if (uid) clientLike.subscribe(`/topic/notifications.${uid}`, m => { try{ addItem(JSON.parse(m.body)); }catch(e){} });
+    };
+
+    if (window.Stomp) {
+        const client = Stomp.over(sockUrlFactory());
+        if (client.debug) client.debug = null;
+        client.connect({}, () => {
+        // Đăng ký cả 2 kênh nhưng đã có khử trùng lặp → không bị hiển thị đôi
+        useUserQueue(client);
+        useTopicFallback(client);
+        }, err => console.error('WS connect error:', err));
+    } else if (window.StompJs && window.StompJs.Client) {
+        const client = new window.StompJs.Client({
+        reconnectDelay: 5000,
+        webSocketFactory: sockUrlFactory,
+        onConnect: () => {
+            useUserQueue(client);
+            useTopicFallback(client);
+        },
+        debug: () => {}
+        });
+        client.activate();
+    } else {
+        console.error('No STOMP library available');
+    }
+    })();
+    </script>
     <script>
     (function(){
         const btn = document.getElementById('logoutBtn');

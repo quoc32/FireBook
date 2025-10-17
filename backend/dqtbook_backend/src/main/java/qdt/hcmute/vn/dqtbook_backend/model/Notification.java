@@ -23,6 +23,12 @@ public class Notification {
     @JoinColumn(name = "sender_id")
     private User sender;
 
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) createdAt = java.time.Instant.now();
+        if (isRead == null) isRead = false;
+    }
+
     @Column(name = "type", length = 50, nullable = false)
     private String type;
 
@@ -34,6 +40,7 @@ public class Notification {
 
     @Column(name = "created_at")
     private Instant createdAt;
+    
 }
 
 
