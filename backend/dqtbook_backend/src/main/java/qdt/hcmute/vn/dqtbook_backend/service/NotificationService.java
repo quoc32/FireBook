@@ -24,6 +24,7 @@ public class NotificationService {
 
     @Transactional
     public void createAndSendNotification(User sender, User recipient, String type, Integer sourceId) {
+        if (sender == null || recipient == null) return;
         if (Objects.equals(sender.getId(), recipient.getId())) return;
 
         Notification notification = new Notification();
@@ -47,17 +48,17 @@ public class NotificationService {
                 .senderAvatarUrl(sender.getAvatarUrl())
                 .type(type)
                 .content(buildContent(sender, type))
-                .link(buildLink(sender, type, sourceId))
+                .link(buildLink(type, sourceId, sender.getId()))
                 .isRead(false)
                 .createdAt(createdAt)
                 .build();
 
-        // 1) Theo user-destination (yêu cầu Principal.name = userId)
+        // Chỉ gửi 1 kênh user-queue để tránh hiển thị đôi
         messagingTemplate.convertAndSendToUser(String.valueOf(recipient.getId()),
                 "/queue/notifications", dto);
 
-        // 2) Fallback theo topic riêng userId (client có thể subscribe thêm)
-        messagingTemplate.convertAndSend("/topic/notifications." + recipient.getId(), dto);
+        // Nếu muốn giữ fallback topic (có thể gây trùng nếu FE cũng subscribe), bỏ comment dòng dưới:
+        // messagingTemplate.convertAndSend("/topic/notifications." + recipient.getId(), dto);
     }
 
     private String buildContent(User sender, String type) {
@@ -66,16 +67,20 @@ public class NotificationService {
             case "friend_request_accepted" -> sender.getFullName() + " đã chấp nhận lời mời kết bạn của bạn.";
             case "post_comment" -> sender.getFullName() + " đã bình luận vào bài viết của bạn.";
             case "post_reaction" -> sender.getFullName() + " đã thả reaction bài viết của bạn.";
+            case "post_share" -> sender.getFullName() + " đã chia sẻ bài viết của bạn.";
             case "new_important_post", "important_post" -> "Có bài viết quan trọng mới!";
             default -> "Bạn có thông báo mới.";
         };
     }
 
-    private String buildLink(User sender, String type, Integer sourceId) {
+    // SỬA: bài quan trọng dẫn thẳng tới post nếu có sourceId
+    private String buildLink(String type, Integer sourceId, Integer senderId) {
         return switch (type) {
             case "friend_request", "friend_request_accepted" -> "/views/friends";
-            case "post_comment", "post_reaction" -> (sourceId != null ? "/views/post/" + sourceId : "/views/user/" + sender.getId());
-            case "new_important_post", "important_post" -> "/views/important-posts";
+            case "post_comment", "post_reaction", "post_share" ->
+                    (sourceId != null ? "/views/post/" + sourceId : "/views/user/" + senderId);
+            case "new_important_post", "important_post" ->
+                    (sourceId != null ? "/views/post/" + sourceId : "/views/important-posts");
             default -> "#";
         };
     }

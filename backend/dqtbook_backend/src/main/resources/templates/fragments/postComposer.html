@@ -514,57 +514,69 @@
         }
         // Create post
         async function createPost(uploadedUrls){
-            // Map returned URLs to media objects paired with original file types
-            const mediaArray = (Array.isArray(uploadedUrls) ? uploadedUrls : [])
-                .filter(Boolean)
-                .map((url, idx) => {
-                    console.log('Mapping media URL:', url);
-                    const f = files[idx];
-                    let media_type = 'image';
-                    if (f?.type?.startsWith('video/')) media_type = 'video';
-                    else if (f?.type?.startsWith('image/')) media_type = 'image';
-                    return {
-                        media_type,
-                        media_url: "http://localhost:8080" + url
-                    };
-                });
+        const mediaArray = (Array.isArray(uploadedUrls) ? uploadedUrls : [])
+            .filter(Boolean)
+            .map((url, idx) => {
+                const f = files[idx];
+                let media_type = 'image';
+                if (f?.type?.startsWith('video/')) media_type = 'video';
+                else if (f?.type?.startsWith('image/')) media_type = 'image';
+                return {
+                    media_type,
+                    media_url: "http://localhost:8080" + url
+                };
+            });
 
-            const isImportant = document.getElementById('isImportantCheck').checked;
+        const isImportant = document.getElementById('isImportantCheck').checked;
 
-            const payload = {
-                author_id: (Number(JSON.parse(localStorage.getItem('auth')).user_id) || null), // from localStorage
-                content: contentEl.value.trim(),
-                visibility: (function(){ // map select -> public|friends|private
-                    try{
-                        const sel = document.querySelector('#createPostModal select.form-select');
-                        const raw = (sel ? (sel.value || sel.options[sel.selectedIndex]?.text || '') : '')
-                            .toLocaleLowerCase('vi').trim();
-                        if (raw === 'public' || raw === 'friends' || raw === 'private') return raw;
-                        if (raw.includes('công khai')) return 'public';
-                        if (raw.includes('bạn bè')) return 'friends';
-                        if (raw.includes('chỉ mình tôi')) return 'private';
-                        return 'public';
-                    }catch(_){ return 'public'; }
-                })(), // Quốc 2
-                post_type: isImportant ? 'important' : 'normal',
-                status: 'pending',
-                media: mediaArray
-            };
+        const payload = {
+            author_id: (Number(JSON.parse(localStorage.getItem('auth')).user_id) || null),
+            content: contentEl.value.trim(),
+            visibility: (function(){
+                try{
+                    const sel = document.querySelector('#createPostModal select.form-select');
+                    const raw = (sel ? (sel.value || sel.options[sel.selectedIndex]?.text || '') : '')
+                        .toLocaleLowerCase('vi').trim();
+                    if (raw === 'public' || raw === 'friends' || raw === 'private') return raw;
+                    if (raw.includes('công khai')) return 'public';
+                    if (raw.includes('bạn bè')) return 'friends';
+                    if (raw.includes('chỉ mình tôi')) return 'private';
+                    return 'public';
+                }catch(_){ return 'public'; }
+            })(),
+            post_type: isImportant ? 'important' : 'normal',
+            status: 'pending',
+            media: mediaArray
+        };
 
-            try{
-                const res = await fetch('http://localhost:8080/api/posts', {
-                    method:'POST',
-                    headers:{ 'Content-Type':'application/json' },
-                    body: JSON.stringify(payload),
-                    credentials:'include'
-                });
-                if(!res.ok) throw new Error('Post create failed: '+res.status);
-                return await res.json().catch(()=>({}));
-            }catch(err){
-                console.error(err);
-                throw err;
+        try{
+            const res = await fetch('http://localhost:8080/api/posts', {
+                method:'POST',
+                headers:{ 'Content-Type':'application/json' },
+                body: JSON.stringify(payload),
+                credentials:'include'
+            });
+            if(!res.ok) throw new Error('Post create failed: '+res.status);
+
+            const created = await res.json().catch(()=> ({}));
+            // LẤY postId từ đáp án
+            const postId = created?.post_id ?? created?.id ?? created?.data?.id ?? null;
+
+            // Nếu là bài quan trọng -> gọi phát thông báo cho bạn bè
+            if (isImportant && postId) {
+                try{
+                    await fetch(`/api/posts/${postId}/broadcast-important`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+                }catch(_){}
             }
+            return created;
+        }catch(err){
+            console.error(err);
+            throw err;
         }
+    }
 
         form.addEventListener('submit', async e=>{
             e.preventDefault();

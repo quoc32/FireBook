@@ -559,27 +559,79 @@
     const emptyEl = document.getElementById('no-notifications');
     const markBtn = document.getElementById('markAllNotif');
 
-    // Khử trùng lặp theo notification_id (ưu tiên), fallback key khi thiếu id
-    const seenKeys = new Set();
-    const seenQueue = [];
-    const MAX_SEEN = 500;
+    // De-dup store with TTL for post events
+    const seen = new Map(); // key -> lastTs(ms)
+    const MAX_SIZE = 800;
+    const TTL_POST_MS = 10000; // 10s cho các sự kiện bài viết (bao gồm important)
 
-    function makeKey(n){
-        const id = n.notification_id || n.notificationId;
-        if (id != null) return 'id:' + id;
-        const sender = n.sender_id || n.senderId || '';
-        const t = n.type || '';
-        const link = n.link || '';
-        const ts = n.created_at || n.createdAt || '';
-        return `f:${t}|${sender}|${link}|${ts}`;
-    }
-    function remember(key){
-        seenKeys.add(key);
-        seenQueue.push(key);
-        if (seenQueue.length > MAX_SEEN){
-        const old = seenQueue.shift();
-        seenKeys.delete(old);
+    function cleanupSeen(){
+        if (seen.size <= MAX_SIZE) return;
+        const now = Date.now();
+        for (const [k,ts] of seen){
+        if (now - ts > 5*60*1000) seen.delete(k);
+        if (seen.size <= MAX_SIZE) break;
         }
+    }
+
+    function isPostType(t){
+        return t === 'post_comment' || t === 'post_reaction' || t === 'post_share' || t === 'new_important_post' || t === 'important_post';
+    }
+    function isImportantType(t){
+        return t === 'new_important_post' || t === 'important_post';
+    }
+    function norm(str){ return String(str||'').trim().toLowerCase(); }
+
+    function parsePostIdFromLink(link){
+        try {
+        if (!link) return null;
+        const m = String(link).match(/\/views\/post\/(\d+)/);
+        return m ? Number(m[1]) : null;
+        } catch { return null; }
+    }
+
+    function dedupKey(n){
+        const id = n.notification_id ?? n.notificationId;
+        const type = n.type || '';
+        const sender = n.sender_id ?? n.senderId ?? '';
+        const source = n.source_id ?? n.sourceId ?? parsePostIdFromLink(n.link) ?? '';
+        const link = n.link || '';
+        const tsStr = n.created_at || n.createdAt || '';
+        const content = n.content || '';
+
+        // Quan trọng: 2 đường phát có thể khác link nhưng cùng event
+        if (isImportantType(type)) {
+        // Ưu tiên key theo (type, sender, sourceId) nếu có sourceId
+        if (source) return { key: `imp:${type}|${sender}|${source}`, ttl:true };
+        // Không có sourceId: dùng (type, sender, nội dung chuẩn hoá) để gom
+        return { key: `imp:${type}|${sender}|${norm(content)}`, ttl:true };
+        }
+
+        if (isPostType(type)) {
+        // Post thường: (type, sender, sourceId) để gom sự kiện trùng trong TTL
+        return { key: `post:${type}|${sender}|${source}`, ttl:true };
+        }
+
+        // Loại khác: theo id nếu có, nếu không thì theo (type,sender,link,ts)
+        if (id != null) return { key: 'id:'+id, ttl:false };
+        return { key: `evt:${type}|${sender}|${link}|${tsStr}`, ttl:false };
+    }
+
+    function shouldDrop(n){
+        const { key, ttl } = dedupKey(n);
+        const now = Date.now();
+        if (!seen.has(key)) {
+        seen.set(key, now);
+        cleanupSeen();
+        return false;
+        }
+        if (ttl) {
+        const last = seen.get(key) || 0;
+        if (now - last <= TTL_POST_MS) return true; // drop trùng trong cửa sổ thời gian
+        seen.set(key, now);
+        cleanupSeen();
+        return false;
+        }
+        return true;
     }
 
     function incBadge(){
@@ -598,9 +650,7 @@
     function timeFmt(v){ try{ return new Date(v).toLocaleString(); }catch(_){ return ''; } }
 
     function addItem(n){
-        const k = makeKey(n);
-        if (seenKeys.has(k)) return;      // BỎ QUA thông báo trùng
-        remember(k);
+        if (shouldDrop(n)) return;
 
         if(emptyEl) emptyEl.classList.add('d-none');
         const a = document.createElement('a');
@@ -619,38 +669,38 @@
 
     markBtn?.addEventListener('click', e => { e.preventDefault(); resetBadge(); });
 
-    // Lấy uid để thêm vào SockJS khi cần
+    // Lấy uid để attach vào SockJS khi không có cookie session
     let uid = null;
     try {
         const auth = JSON.parse(localStorage.getItem('auth') || '{}');
         uid = auth?.user_id || auth?.id || auth?.userId || null;
     } catch {}
 
-    const sockUrlFactory = () => new SockJS(uid ? `/ws?uid=${encodeURIComponent(uid)}` : '/ws');
+    const sockFactory = () => new SockJS(uid ? `/ws?uid=${encodeURIComponent(uid)}` : '/ws');
 
-    // Ưu tiên thư viện Stomp cũ; fallback sang StompJs UMD
-    const useUserQueue = (clientLike) => {
-        clientLike.subscribe('/user/queue/notifications', m => { try{ addItem(JSON.parse(m.body)); }catch(e){} });
-    };
-    const useTopicFallback = (clientLike) => {
-        if (uid) clientLike.subscribe(`/topic/notifications.${uid}`, m => { try{ addItem(JSON.parse(m.body)); }catch(e){} });
-    };
+    function subscribeBoth(client){
+        client.subscribe('/user/queue/notifications', m => {
+        try { addItem(JSON.parse(m.body)); } catch(e) { console.error(e); }
+        });
+        if (uid) {
+        client.subscribe(`/topic/notifications.${uid}`, m => {
+            try { addItem(JSON.parse(m.body)); } catch(e) { console.error(e); }
+        });
+        }
+    }
 
     if (window.Stomp) {
-        const client = Stomp.over(sockUrlFactory());
-        if (client.debug) client.debug = null;
-        client.connect({}, () => {
-        // Đăng ký cả 2 kênh nhưng đã có khử trùng lặp → không bị hiển thị đôi
-        useUserQueue(client);
-        useTopicFallback(client);
+        const stomp = Stomp.over(sockFactory());
+        if (stomp.debug) stomp.debug = null;
+        stomp.connect({}, () => {
+        subscribeBoth(stomp);
         }, err => console.error('WS connect error:', err));
     } else if (window.StompJs && window.StompJs.Client) {
         const client = new window.StompJs.Client({
         reconnectDelay: 5000,
-        webSocketFactory: sockUrlFactory,
+        webSocketFactory: sockFactory,
         onConnect: () => {
-            useUserQueue(client);
-            useTopicFallback(client);
+            subscribeBoth(client);
         },
         debug: () => {}
         });
